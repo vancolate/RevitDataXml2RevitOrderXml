@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RevitDataXml2RevitOrderXml": {
+      "commandName": "Project",
+      "commandLineArgs": "\"D:\\Autodesk\\Revit 2020\\export\\RevitData.xml\" \"D:\\Autodesk\\Revit 2020\\export\\RevitOrder.xml\""
+    }
+  }
+}
