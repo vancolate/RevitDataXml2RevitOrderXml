@@ -7,6 +7,9 @@ using System.Xml;
 using System.Xml.Linq;
 
 using static System.Console;
+using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace RevitDataXml2RevitOrderXml
 {
@@ -437,10 +440,7 @@ namespace RevitDataXml2RevitOrderXml
                 PipeNode pipeNode = new PipeNode()
                 {
                     uid = fitting.Attribute("UniqueId").Value,
-                    //pipeNodeType = PipeNodeType.Bend,
-                    //nodeType = nodeType,
-                    //familyName = fitting.Attribute("FamilyName").Value,
-                    //symbolName = fitting.Attribute("SymbolName").Value,
+                    startPoint= fitting.Attribute("Point").Value,
                 };
                 var connectedUids = fitting.Attribute("ConnectorEntitys").Value.Split(";");
                 switch (connectedUids.Length)
@@ -535,11 +535,113 @@ namespace RevitDataXml2RevitOrderXml
         {
             var uids = entitys_type.Select((elem) => elem.Attribute("UniqueId").Value);
 
-            return
+            var existFittings = 
                 from fitting in fittings
                 let connectedUid = fitting.Attribute("ConnectorEntitys").Value.Split(";")
                 where uids.Intersect(connectedUid).Count() > 0
                 select fitting;
+
+            //由于revitData出现了一条管道被7个附件连接的情况
+            //而且三通和它的管件会重复连接管道
+            //你是歌姬吧
+            //existFittings=existFittings. <XElement>(new FittingConnectEqualityComparer());
+
+            ISet<XElement> list = new HashSet<XElement>(new FittingConnectEqualityComparer());
+            List<XElement> listAppend = new List<XElement>();
+            foreach (XElement fitting in existFittings)
+                if (fitting.Attribute("ConnectorEntitys").Value.Split(";").Length > 2)
+                    list.Add(fitting);
+
+            bool doDelete = false;
+            foreach (XElement fitting in existFittings) 
+            {
+                var minConnectedUid = fitting.Attribute("ConnectorEntitys").Value.Split(";");
+                if (minConnectedUid.Length <= 2)
+                {
+                    foreach (XElement maxFitting in list)
+                    {
+                        var maxConnectedUid = maxFitting.Attribute("ConnectorEntitys").Value.Split(";");
+
+                        foreach (var minUid in minConnectedUid)
+                        {
+                            if (!maxConnectedUid.Contains(minUid))
+                            {
+                                break;
+                            }
+                            doDelete = true;
+                        }
+                        if (doDelete)
+                            break;
+                    }
+                    if (!doDelete)
+                        listAppend.Add(fitting);
+                }
+            }
+
+            for (int i = 0; i < listAppend.Count(); i++)
+                list.Add(listAppend[i]);
+
+            //var set=existFittings
+            //    .GroupBy(elem => 
+            //    {
+
+            //    } )
+            //    .Select(group =>
+            //    {
+            //        group.OrderByDescending(elem => elem.Attribute("ConnectorEntitys").Value.Split(";").Length);
+            //        return group.First();
+            //    })
+            //    .ToList();
+
+            return list;
+        }
+    }
+   
+    class FittingConnectEqualityComparer : IEqualityComparer<XElement>
+    {
+        public bool Equals(XElement x, XElement y)
+        {
+            var xConnectedUid = x.Attribute("ConnectorEntitys").Value.Split(";");
+            var yConnectedUid = y.Attribute("ConnectorEntitys").Value.Split(";");
+
+            if (xConnectedUid.Length == yConnectedUid.Length)
+            {
+                foreach(var xUid in xConnectedUid) 
+                {
+                    if(!yConnectedUid.Contains(xUid))
+                        return false;
+                }
+                return true;
+            }
+            else 
+            {
+                string[] maxConnectedUid;
+                string[] minConnectedUid;
+                if (xConnectedUid.Length > yConnectedUid.Length) 
+                {
+                    maxConnectedUid = xConnectedUid;
+                    minConnectedUid = yConnectedUid;
+                }
+                else 
+                {
+                    maxConnectedUid = yConnectedUid;
+                    minConnectedUid = xConnectedUid;
+                }
+
+                foreach (var minUid in minConnectedUid)
+                {
+                    if (!maxConnectedUid.Contains(minUid))
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        public int GetHashCode([DisallowNull] XElement obj)
+        {
+            var list = obj.Attribute("ConnectorEntitys").Value.Split(";").ToList();
+            list.Sort();
+            return BitConverter.ToInt32(new MD5CryptoServiceProvider().ComputeHash(ASCIIEncoding.ASCII.GetBytes(String.Join('_', list))));
         }
     }
 
@@ -597,6 +699,8 @@ namespace RevitDataXml2RevitOrderXml
         }
         public NodeConnector CreateNodeConnector()
         {
+            if (FirstNullIndex >= 4)
+                throw new Exception($"CreateNodeConnector:FirstNullIndex>=4,uid={this.uid}");
             return connectors[FirstNullIndex++] = new NodeConnector();
         }
     }
