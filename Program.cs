@@ -15,16 +15,16 @@ namespace RevitDataXml2RevitOrderXml
 {
     static class XmlFactory
     {
-        private static XDocument Xdocument = new XDocument();
-        private static XElement root = new XElement("Root");
+        private static XDocument Xdocument_Output = new XDocument();
+        private static XElement root_Output = new XElement("Root");
         static XmlFactory()
         {
-            Xdocument.Add(root);
+            Xdocument_Output.Add(root_Output);
         }
 
         public static void SaveXml(string savePath)
         {
-            Xdocument.Save(savePath);
+            Xdocument_Output.Save(savePath);
         }
 
         public static void AppendXml(PipeNodeBase pipeNodeBase)
@@ -58,20 +58,57 @@ namespace RevitDataXml2RevitOrderXml
                         nodeCount++;
                     }
 
+                    //全部共用
                     pipeListXml.SetAttributeValue("PipeListNo", $"{listCount}");
                     pipeListXml.SetAttributeValue("PrevListNo", $"{pipeGroup._pipeLists.FindIndex((elem) => { return ReferenceEquals(elem, pipeList.prev); }) + 1}");
                     pipeListXml.SetAttributeValue("TeeId_Next", $"{pipeList.teeId_next}");
                     pipeListXml.SetAttributeValue("TeePoint_Next", $"{pipeList.teePoint_next}");
 
-                    pipeListXml.SetAttributeValue("FamilyName", $"{pipeList.familyName}");
-                    pipeListXml.SetAttributeValue("SymbolName", $"{pipeList.symbolName}");
-                    pipeListXml.SetAttributeValue("SystemClassfy", $"{pipeList.systemClassfy}");
-                    pipeListXml.SetAttributeValue("SystemType", $"{pipeList.systemType}");
-                    pipeListXml.SetAttributeValue("HorizonOffset", $"{pipeList.horizonOffset}");
-                    pipeListXml.SetAttributeValue("VerticalOffset", $"{pipeList.verticalOffset}");
-                    pipeListXml.SetAttributeValue("Color", $"{pipeList.color}");
+                    //Pipe与Duct共用
+                    if (pipeList.familyName != null)
+                    {
+                        pipeListXml.SetAttributeValue("FamilyName", $"{pipeList.familyName}");
+                        pipeListXml.SetAttributeValue("SymbolName", $"{pipeList.symbolName}");
+                        pipeListXml.SetAttributeValue("SystemClassfy", $"{pipeList.systemClassfy}");
+                        pipeListXml.SetAttributeValue("SystemType", $"{pipeList.systemType}");
+                        pipeListXml.SetAttributeValue("HorizonOffset", $"{pipeList.horizonOffset}");
+                        pipeListXml.SetAttributeValue("VerticalOffset", $"{pipeList.verticalOffset}");
+                        pipeListXml.SetAttributeValue("Color", $"{pipeList.color}");
+                    }
 
-                    pipeListXml.SetAttributeValue("DuctType", $"{pipeList.ductType}");
+                    //仅Duct
+                    if (pipeList.ductType != null)
+                        pipeListXml.SetAttributeValue("DuctType", $"{pipeList.ductType}");
+                    //仅AC/仅DR
+                    else if (pipeList.ac != null)
+                    {
+                        pipeListXml.SetAttributeValue("SquareORRound", $"{pipeList.ac.SquareORRound}");
+                        pipeListXml.SetAttributeValue("ClosedDuct", $"{pipeList.ac.ClosedDuct}");
+                        pipeListXml.SetAttributeValue("Size", $"{pipeList.ac.Size}");
+                        pipeListXml.SetAttributeValue("SDRSystemType", $"{pipeList.ac.SDRSystemType}");
+                        pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.ac.PipeJoint}");
+
+                        pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.ac.InstallationSpace}");
+                        pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.ac.InsulationThickness}");
+                        pipeListXml.SetAttributeValue("PriorityANDSpecial", $"{pipeList.ac.PriorityANDSpecial}");
+                        pipeListXml.SetAttributeValue("GoThroughWallORBeam", $"{pipeList.ac.GoThroughWallORBeam}");
+                    }
+                    else if (pipeList.dr != null)
+                    {
+                        pipeListXml.SetAttributeValue("DiameterDN", $"{pipeList.dr.DiameterDN}");
+                        pipeListXml.SetAttributeValue("SDRSystemType", $"{pipeList.dr.SDRSystemType}");
+                        pipeListXml.SetAttributeValue("PipeMaterial", $"{pipeList.dr.PipeMaterial}");
+                        pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.dr.PipeJoint}");
+                        pipeListXml.SetAttributeValue("TrapORCleanout", $"{pipeList.dr.TrapORCleanout}");
+
+                        pipeListXml.SetAttributeValue("Bend45ORBend90", $"{pipeList.dr.Bend45ORBend90}");
+                        pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.dr.InstallationSpace}");
+                        pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.dr.InsulationThickness}");
+                        pipeListXml.SetAttributeValue("Slope", $"{pipeList.dr.Slope}");
+                        pipeListXml.SetAttributeValue("Priority", $"{pipeList.dr.Priority}");
+
+                        pipeListXml.SetAttributeValue("GoThroughWallORBeam", $"{pipeList.dr.GoThroughWallORBeam}");
+                    }
 
                     pipeGroupXml.Add(pipeListXml);
                     //下一个管件列
@@ -80,11 +117,10 @@ namespace RevitDataXml2RevitOrderXml
                 pipeGroupXml.SetAttributeValue("PipeGroupNo", $"{groupCount}");
                 pipeGroupXml.SetAttributeValue("Type", $"{pipeGroup.nodeType}");
 
-                root.Add(pipeGroupXml);
+                root_Output.Add(pipeGroupXml);
                 //下一个管件组
                 groupCount++;
             }
-
             return;
         }
     }
@@ -113,16 +149,18 @@ namespace RevitDataXml2RevitOrderXml
             //②读取xml
             WriteLine("载入xml中...");
             XDocument xDocument = XDocument.Load(xmlReadPath);
-            var root = xDocument.Root;
+            var root_input = xDocument.Root;
 
-            var entitys = root.Element("Entitys").Elements();
-            var fittings = root.Element("Fittings").Elements();
+            var entitys = root_input.Element("Entitys").Elements();
+            var fittings = root_input.Element("Fittings").Elements();
 
             //③+④+⑤
-            Process_AND_AppendXml_WithOneType(NodeType.Pipe,entitys, fittings);
-            Process_AND_AppendXml_WithOneType(NodeType.Duct,entitys, fittings);
+            //Process_AND_AppendXml_WithOneType(NodeType.Pipe, entitys, fittings);
+            //Process_AND_AppendXml_WithOneType(NodeType.Duct, entitys, fittings); 
+            Process_AND_AppendXml_WithOneType(NodeType.LinePipe, entitys, fittings);
+            Process_AND_AppendXml_WithOneType(NodeType.LineDuct, entitys, fittings);
 
-            //⑤
+            //⑤输出xml
             XmlFactory.SaveXml(xmlWritePath);
 
             WriteLine("程序结束");
@@ -133,39 +171,43 @@ namespace RevitDataXml2RevitOrderXml
         {
 
             //(1)Duct✓ (2)Pipe (3)LineDuct (4)LinePipe
-            var entitys_duct = GetTypeEntitysFromAllEntitys(nodeType.ToString(), entitys);
-            var fittings_duct = GetTypeFittingsFromAllFittings(entitys_duct, fittings);
+            var entitys_type = GetTypeEntitysFromAllEntitys(nodeType.ToString(), entitys);
+            var fittings_type = GetTypeFittingsFromAllFittings(entitys_type, fittings,nodeType);
 
             //③转化为自定义管道类
             //第一次获取连接数据,将xml化为内存对象.以及管道自己的数据.
-            List<PipeNode> OriginalPipeNodes = GetPipeNodeFromDate(entitys_duct, fittings_duct, nodeType);
+            List<PipeNode> OriginalPipeNodes = GetPipeNodeFromDate(entitys_type, fittings_type, nodeType);
 
             //④处理管道类
-            //去除附件,直连两端
-            DeleteFittingsNode(OriginalPipeNodes);
+            //去除弯头对外的连接,直连其两端
+            DeleteFittingsNode(OriginalPipeNodes, nodeType);
 
-            PipeNodeBase pipeNodeBase = Output2Base(OriginalPipeNodes);
+            PipeNodeBase pipeNodeBase = Output2Base(OriginalPipeNodes, nodeType);
 
-            //第二次获取属性数据,从管道上获取,放到列、组
+            //第二次获取属性数据,从管道上获取,上放到列、组中
             foreach (var pipeGroup in pipeNodeBase._pipeGroups)
             {
                 {
-                    var someonePipeXml = entitys_duct.First(elem => elem.Attribute("UniqueId").Value == pipeGroup._pipeLists[0]._pipes[0].uid);
+                    var someonePipeXml = entitys_type.First(elem => elem.Attribute("UniqueId").Value == pipeGroup._pipeLists[0]._pipes[0].uid);
                     //在这里配置组拥有的属性
                     pipeGroup.nodeType = nodeType;//Enum.Parse<NodeType>(someonePipeXml.Attribute("type").Value);
                 }
 
                 foreach (var pipeList in pipeGroup._pipeLists)
                 {
-                    var someonePipeXml = entitys_duct.First(elem => elem.Attribute("UniqueId").Value == pipeList._pipes[0].uid);
+                    var someonePipeXml = entitys_type.First(elem => elem.Attribute("UniqueId").Value == pipeList._pipes[0].uid);
                     //在这里配置列拥有的属性
-                    pipeList.familyName = someonePipeXml.Element("FamilyName").FirstAttribute.Value;
-                    pipeList.symbolName = someonePipeXml.Element("SymbolName").FirstAttribute.Value;
-                    pipeList.horizonOffset = someonePipeXml.Element("HorizonOffset").FirstAttribute.Value;
-                    pipeList.verticalOffset = someonePipeXml.Element("VerticalOffset").FirstAttribute.Value;
-                    pipeList.systemClassfy = someonePipeXml.Element("SystemClassfy").FirstAttribute.Value;
-                    pipeList.systemType = someonePipeXml.Element("SystemType").FirstAttribute.Value;
-                    pipeList.color = someonePipeXml.Element("Color").FirstAttribute.Value;
+
+                    if(nodeType == NodeType.Pipe || nodeType == NodeType.Duct) 
+                    {
+                        pipeList.familyName = someonePipeXml.Element("FamilyName").FirstAttribute.Value;
+                        pipeList.symbolName = someonePipeXml.Element("SymbolName").FirstAttribute.Value;
+                        pipeList.horizonOffset = someonePipeXml.Element("HorizonOffset").FirstAttribute.Value;
+                        pipeList.verticalOffset = someonePipeXml.Element("VerticalOffset").FirstAttribute.Value;
+                        pipeList.systemClassfy = someonePipeXml.Element("SystemClassfy").FirstAttribute.Value;
+                        pipeList.systemType = someonePipeXml.Element("SystemType").FirstAttribute.Value;
+                        pipeList.color = someonePipeXml.Element("Color").FirstAttribute.Value;
+                    }
 
                     if (pipeGroup.nodeType == NodeType.Duct)
                         pipeList.ductType = someonePipeXml.Element("DuctType").Attribute("value").Value;
@@ -181,61 +223,123 @@ namespace RevitDataXml2RevitOrderXml
 
         //必须由管道开始遍历,且管道的一端为空或所连id为空,且管道不能有重复
         //调用Output2Group,加入pipeNodeBase中
-        private static PipeNodeBase Output2Base(List<PipeNode> originalPipeNodes)
+        private static PipeNodeBase Output2Base(List<PipeNode> originalPipeNodes,NodeType nodeType)
         {
             PipeNodeBase pipeNodeBase = new PipeNodeBase();
             //遍历起点
-            bool findNode;
-            do
+
+            switch (nodeType)
             {
-                findNode = false;
-                foreach (PipeNode pipeNode in originalPipeNodes)
-                {
-                    //必须由管道开始
-                    //if (pipeNode.counted)
-                    if (pipeNode.counted || pipeNode.pipeNodeType != PipeNodeType.Pipe)
-                        continue;
-
-                    foreach (NodeConnector connector in pipeNode.connectors)
+                case NodeType.Pipe:
+                case NodeType.Duct:
+                    int nullConnectorCount;
+                    foreach (PipeNode pipeNode in originalPipeNodes)
                     {
-                        //找到一个起点: 存在一端为空
-                        if (connector == null || connector.node == null)
-                            findNode = true;
+                        //必须由管道开始
+                        //if (pipeNode.counted)
+                        if (pipeNode.counted || pipeNode.pipeNodeType != PipeNodeType.Pipe)
+                            continue;
+
+                        nullConnectorCount = 0;
+                        foreach (NodeConnector connector in pipeNode.connectors)
+                        {
+                            //找到一个起点: 存在3空
+                            if (connector == null || connector.node == null)
+                                nullConnectorCount++;
+                        }
+                        if (nullConnectorCount != 3)
+                            continue;
+
+
+                        PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
+                        //顺序排入
+                        Output2Group(pipeNode, pipeNodeGroup._pipeLists, nodeType);
+
+                        //加入节点库
+                        if (pipeNodeGroup._pipeLists.Count > 0)
+                            pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
                     }
-                    if (!findNode)
-                        continue;
-
-                    PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
-                    //顺序排入
-                    Output2Group(pipeNode, pipeNodeGroup._pipeLists);
-
-                    //加入节点库
-                    if (pipeNodeGroup._pipeLists.Count > 0)
-                        pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
                     break;
-                }
-            } while (findNode);
+                case NodeType.LineDuct:
+                    foreach (PipeNode pipeNode in originalPipeNodes)
+                    {
+                        //必须由单头开始 ***待定:而且需要标记为S***
+                        //if (pipeNode.mark=="S")
+                        if (pipeNode.counted || pipeNode.pipeNodeType != PipeNodeType.Single)
+                            continue;
+
+                        PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
+                        //顺序排入
+                        Output2Group(pipeNode, pipeNodeGroup._pipeLists, nodeType, pipeNode.ac);
+
+                        //加入节点库
+                        if (pipeNodeGroup._pipeLists.Count > 0)
+                            pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
+                    }
+                    break;
+                case NodeType.LinePipe:
+                    foreach (PipeNode pipeNode in originalPipeNodes)
+                    {
+                        //必须由单头开始 ***待定:而且需要标记为S***
+                        //if (pipeNode.mark=="S")
+                        if (pipeNode.counted || pipeNode.pipeNodeType != PipeNodeType.Single)
+                            continue;
+
+                        PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
+                        //顺序排入
+                        Output2Group(pipeNode, pipeNodeGroup._pipeLists, nodeType, pipeNode.dr);
+
+                        //加入节点库
+                        if (pipeNodeGroup._pipeLists.Count > 0)
+                            pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
+                    }
+                    break;
+            }
+
             return pipeNodeBase;
         }
 
-        private static void Output2Group(PipeNode firstNode, List<PipeNodeList> pipeNodeGroup)
+        private static void Output2Group(PipeNode firstNode, List<PipeNodeList> pipeNodeGroup, NodeType nodeType,Object first_AC_OR_DR=null)
         {
-            if (firstNode.counted)
-                return;
-
-            PipeNodeList prevList;
             PipeNodeList pipeNodeList = new PipeNodeList();
 
             PipeNode current;
             PipeNode prev;
+            PipeNodeList prevList;
+            Object AC_OR_DR;
+            Stack<(PipeNode current, PipeNode prev, PipeNodeList prevList, Object AC_OR_DR)> nextStack = new Stack<(PipeNode, PipeNode, PipeNodeList, Object)>();
 
-            Stack<(PipeNode, PipeNode, PipeNodeList)> nextStack = new Stack<(PipeNode, PipeNode, PipeNodeList)>();
-            nextStack.Push((firstNode, null, null));
+            //线管开头管件的SDR
+            //糟糕的代码
+            if (first_AC_OR_DR != null)
+            {
+                if (nodeType == NodeType.LineDuct)
+                    pipeNodeList.ac = (first_AC_OR_DR as ACSDR);
+                else if(nodeType == NodeType.LinePipe)
+                    pipeNodeList.dr = (first_AC_OR_DR as DRSDR);
+                else
+                    throw new Exception("存在参数first_AC_OR_DR但不是线管");
+
+                //跳过开头的单头
+                foreach (NodeConnector connector in firstNode.connectors)
+                {
+                    if (connector == null || connector.node == null)
+                        continue;
+                    nextStack.Push((connector.node, firstNode, null, null));
+                    break;
+                }
+            }
+            else 
+            {
+                nextStack.Push((firstNode, null, null, null));
+            }
 
             do
             {
-                (current, prev, prevList) = nextStack.Pop();
+                //拿一个
+                (current, prev, prevList, AC_OR_DR) = nextStack.Pop();
 
+                //判断是否重复了
                 if (current.counted)
                 {
                     if (pipeNodeList._pipes.Count > 0)
@@ -250,60 +354,171 @@ namespace RevitDataXml2RevitOrderXml
                 current.counted = true;
                 //WPFConsole($"{current.id}");
 
-                if (current.pipeNodeType == PipeNodeType.Pipe)
+                //糟糕的代码2
+                if(AC_OR_DR != null) 
                 {
-                    var connected = false;
-                    foreach (NodeConnector connector in current.connectors)
-                    {
-                        if (connector == null || connector.node == null || connector.node == prev)
-                            continue;
-                        connected = true;
-                        nextStack.Push((connector.node, current, prevList));
-                        break;
-                    }
-                    pipeNodeList._pipes.Add(current);
-                    if (!connected)
-                    {
-                        //加入
-                        pipeNodeList.prev = prevList;
-                        if (pipeNodeList._pipes.Count > 0)
-                            pipeNodeGroup.Add(pipeNodeList);
-                        pipeNodeList = new PipeNodeList();
-                    }
+                    if (nodeType == NodeType.LineDuct)
+                        pipeNodeList.ac = (AC_OR_DR as ACSDR);
+                    else if (nodeType == NodeType.LinePipe)
+                        pipeNodeList.dr = (AC_OR_DR as DRSDR);
+                    else
+                        throw new Exception("存在参数AC_OR_DR但不是线管");
                 }
-                else if (current.pipeNodeType == PipeNodeType.Tee || current.pipeNodeType == PipeNodeType.Four)
-                {
-                    //加入
-                    pipeNodeList.prev = prevList;
-                    pipeNodeList.teeId_next = current.uid;
-                    pipeNodeList.teePoint_next = current.startPoint;
-                    if (pipeNodeList._pipes.Count > 0)
-                        pipeNodeGroup.Add(pipeNodeList);
-                    //分支循环
-                    foreach (NodeConnector connector in current.connectors)
-                    {
-                        if (connector == null || connector.node == null || connector.node == prev)
-                            continue;
-                        nextStack.Push((connector.node, current, pipeNodeList));
-                        continue;
-                    }
-                    pipeNodeList = new PipeNodeList();
-                }
-                else if (current.pipeNodeType == PipeNodeType.Single)
-                    continue;
-                else
-                    throw new Exception("current.pipeNodeType == ?");
 
+                //判断管件类型
+                switch (current.pipeNodeType)
+                {
+                    case PipeNodeType.Pipe:
+                    //判断是管道
+                        {
+                            var connected = false;
+                            foreach (NodeConnector connector in current.connectors)
+                            {
+                                if (connector == null || connector.node == null || connector.node == prev)
+                                    continue;
+                                connected = true;
+                                nextStack.Push((connector.node, current, prevList,null));
+                                break;
+                            }
+                            pipeNodeList._pipes.Add(current);
+                            //如果没有连接,说明到终点了,当前列加入组,重新开个列
+                            if (!connected)
+                            {
+                                //加入
+                                pipeNodeList.prev = prevList;
+                                if (pipeNodeList._pipes.Count > 0)
+                                    pipeNodeGroup.Add(pipeNodeList);
+                                pipeNodeList = new PipeNodeList();
+                            }
+                        }
+                        break;
+                    case PipeNodeType.Tee:
+                    case PipeNodeType.Four:
+                        {
+                            //判断是三通四通
+                            //加入
+                            pipeNodeList.prev = prevList;
+                            pipeNodeList.teeId_next = current.uid;
+                            pipeNodeList.teePoint_next = current.startPoint;
+                            if (pipeNodeList._pipes.Count > 0)
+                                pipeNodeGroup.Add(pipeNodeList);
+                            //分支循环
+                            foreach (NodeConnector connector in current.connectors)
+                            {
+                                if (connector == null || connector.node == null || connector.node == prev)
+                                    continue;
+
+                                //真管,线管判断
+                                if(nodeType == NodeType.LinePipe || nodeType == NodeType.LineDuct) 
+                                {
+                                    if (current.ac != null)
+                                        nextStack.Push((connector.node, current, pipeNodeList, current.ac));
+                                    else if (current.dr != null)
+                                        nextStack.Push((connector.node, current, pipeNodeList, current.dr));
+                                    else
+                                        nextStack.Push((connector.node, current, pipeNodeList, null));
+                                }
+                                else 
+                                {
+                                    nextStack.Push((connector.node, current, pipeNodeList, null));
+                                }
+
+                                continue;
+                            }
+                            pipeNodeList = new PipeNodeList();
+                        }
+                        break;
+                    case PipeNodeType.Bend:
+                        //判断是双通(线管专用)
+                        {
+                            //加入
+                            pipeNodeList.prev = prevList;
+                            //pipeNodeList.teeId_next = current.uid;
+                            //pipeNodeList.teePoint_next = current.startPoint;
+                            if (pipeNodeList._pipes.Count > 0)
+                                pipeNodeGroup.Add(pipeNodeList);
+                            //分支循环
+                            foreach (NodeConnector connector in current.connectors)
+                            {
+                                if (connector == null || connector.node == null || connector.node == prev)
+                                    continue;
+
+                                //若是真SDR,新开一个列,并传递SDR
+                                //否则不管
+                                if (current.ac != null)
+                                {
+                                    nextStack.Push((connector.node, current, pipeNodeList, current.ac));
+                                }
+                                else if (current.dr != null)
+                                {
+                                    nextStack.Push((connector.node, current, pipeNodeList, current.dr));
+                                }
+                                else
+                                    throw new Exception("已经去除了无价值弯头,怎么还有空SDR的弯头管件?");
+                                continue;
+                            }
+                            pipeNodeList = new PipeNodeList();
+                        }
+                        break;
+                    case PipeNodeType.Single:
+                        //判断是单头(线管专用)
+                        {
+                            switch (nodeType)
+                            {
+                                case NodeType.Pipe:
+                                case NodeType.Duct:
+                                    //不用管
+                                    continue;
+                                case NodeType.LinePipe:
+                                case NodeType.LineDuct:
+                                    //if(current.mark!="S") ***线管管件被标记为S,即开头时***
+                                    //  continue;
+                                    //若是真SDR且为开头,覆盖列的SDR,结束
+                                    if (current.ac != null)
+                                        pipeNodeList.ac = current.ac;
+                                    else if (current.dr != null)
+                                        pipeNodeList.dr = current.dr;
+                                    else
+                                        throw new Exception("线管单头管件但是它没有ac/dr");
+                                    break;
+                            }
+                            pipeNodeList.prev = prevList;
+                            if (pipeNodeList._pipes.Count > 0)
+                                pipeNodeGroup.Add(pipeNodeList);
+                            pipeNodeList = new PipeNodeList();
+                        }
+                        break;
+                    default:
+                        throw new Exception("current.pipeNodeType == ?");
+                }
             } while (nextStack.Count > 0);
 
         }
-        private static void DeleteFittingsNode(List<PipeNode> originalPipeNodes)
+        private static void DeleteFittingsNode(List<PipeNode> originalPipeNodes,NodeType nodeType)
         {
             foreach (PipeNode pipeNode in originalPipeNodes)
             {
-                //(可能)是附件,才能去除附件
+                //(可能)是弯头,才能去除弯头
                 if (pipeNode.pipeNodeType != PipeNodeType.Bend)
                     continue;
+
+                //线管无价值弯头去除
+                //switch (nodeType) 
+                //{
+                //    case NodeType.Pipe:
+                //    case NodeType.Duct:
+                //        break;
+                //    case NodeType.LinePipe:
+                //        if (pipeNode.dr != null)
+                //            continue;
+                //        break;
+                //    case NodeType.LineDuct:
+                //        if (pipeNode.ac != null)
+                //            continue;
+                //        break;
+                //    default:
+                //        throw new Exception("不是管??");
+                //}
 
                 //不要算入列表
                 pipeNode.counted = true;
@@ -394,11 +609,11 @@ namespace RevitDataXml2RevitOrderXml
         }
 
         //由entitys_duct提出管道,由fittings_duct提出管件,组成包含所有元素的列,然后在里面调用id连接,使自定义管道实例化完成
-        private static List<PipeNode> GetPipeNodeFromDate(IEnumerable<XElement> entitys_duct, IEnumerable<XElement> fittings_duct, NodeType nodeType)
+        private static List<PipeNode> GetPipeNodeFromDate(IEnumerable<XElement> entitys_type, IEnumerable<XElement> fittings_type, NodeType nodeType)
         {
             List<PipeNode> OriginalPipeNodes = new List<PipeNode>();
 
-            foreach (var entity in entitys_duct)
+            foreach (var entity in entitys_type)
             {
                 //为当前管道xml新建管道实例
                 PipeNode pipeNode = new PipeNode()
@@ -415,7 +630,7 @@ namespace RevitDataXml2RevitOrderXml
                 {
                     case NodeType.Duct:
                         if (entity.Element("DuctType").Attribute("value").Value == "圆形")
-                            pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("Radius").FirstAttribute.Value) * 2).ToString();
+                            pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("DuctType").Attribute("Length1").Value) * 2).ToString();
                         else
                         {
                             pipeNode.width = entity.Element("DuctType").Attribute("Length1").Value;
@@ -425,6 +640,7 @@ namespace RevitDataXml2RevitOrderXml
                     case NodeType.Pipe:
                         pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("Radius").FirstAttribute.Value) * 2).ToString();
                         break;
+                    //线管不需要配置宽高,线管件下面的循环配置可能存在的SDR
                     case NodeType.LineDuct:
                     case NodeType.LinePipe:
                         break;
@@ -434,14 +650,60 @@ namespace RevitDataXml2RevitOrderXml
                 OriginalPipeNodes.Add(pipeNode);
             }
 
-            foreach (var fitting in fittings_duct)
+            //连接件
+            foreach (var fitting in fittings_type)
             {
                 PipeNode pipeNode = new PipeNode()
                 {
                     uid = fitting.Attribute("UniqueId").Value,
                     startPoint= fitting.Attribute("Point").Value,
                 };
-                var connectedUids = fitting.Attribute("ConnectorEntitys").Value.Split(";");
+
+                //"GoThroughWallORBeam" 是AC和DR共有的属性,有它代表是真的SDR
+                if (null != fitting.Attribute("GoThroughWallORBeam")) 
+                {
+                    if (nodeType==NodeType.LineDuct)
+                    {
+                        pipeNode.ac = new ACSDR()
+                        {
+                            SquareORRound = fitting.Attribute("SquareORRound")?.Value,
+                            ClosedDuct = fitting.Attribute("ClosedDuct")?.Value,
+                            Size = fitting.Attribute("Size")?.Value,
+                            SDRSystemType = fitting.Attribute("SDRSystemType")?.Value,
+                            PipeJoint = fitting.Attribute("PipeJoint")?.Value,
+
+                            InstallationSpace =fitting.Attribute("InstallationSpace")?.Value,
+                            InsulationThickness =fitting.Attribute("InsulationThickness")?.Value,
+                            PriorityANDSpecial =fitting.Attribute("PriorityANDSpecial")?.Value,
+                            GoThroughWallORBeam =fitting.Attribute("GoThroughWallORBeam")?.Value,
+                        };
+                    }
+                    else if (nodeType == NodeType.LinePipe)
+                    {
+                        pipeNode.dr = new DRSDR()
+                        {
+                            DiameterDN = fitting.Attribute("DiameterDN")?.Value,
+                            SDRSystemType = fitting.Attribute("SDRSystemType")?.Value,
+                            PipeMaterial =fitting.Attribute("PipeMaterial")?.Value,
+                            PipeJoint = fitting.Attribute("PipeJoint")?.Value,
+                            TrapORCleanout = fitting.Attribute("TrapORCleanout")?.Value,
+
+                            Bend45ORBend90 = fitting.Attribute("Bend45ORBend90")?.Value,
+                            InstallationSpace =fitting.Attribute("InstallationSpace")?.Value,
+                            InsulationThickness =fitting.Attribute("InsulationThickness")?.Value,
+                            Slope = fitting.Attribute("Slope")?.Value,
+                            Priority = fitting.Attribute("Priority")?.Value,
+
+                            GoThroughWallORBeam =fitting.Attribute("GoThroughWallORBeam")?.Value,
+                        };
+                    }
+                    else
+                        throw new Exception("不可能的吧");
+                
+                }
+
+                //连接件类型
+                var connectedUids = fitting.Attribute("ConnectorEntitys").Value.Trim(';').Split(";");
                 switch (connectedUids.Length)
                 {
                     case 1:
@@ -530,48 +792,47 @@ namespace RevitDataXml2RevitOrderXml
                 where entity.Attribute("type").Value == typeName
                 select entity;
         }
-        private static IEnumerable<XElement> GetTypeFittingsFromAllFittings(IEnumerable<XElement> entitys_type, IEnumerable<XElement> fittings)
+        private static IEnumerable<XElement> GetTypeFittingsFromAllFittings(IEnumerable<XElement> entitys_type, IEnumerable<XElement> fittings,NodeType nodeType)
         {
             var uids = entitys_type.Select((elem) => elem.Attribute("UniqueId").Value);
 
             var existFittings = 
                 from fitting in fittings
-                let connectedUid = fitting.Attribute("ConnectorEntitys").Value.Split(";")
+                let connectedUid = fitting.Attribute("ConnectorEntitys").Value.Trim(';').Split(";")
                 where uids.Intersect(connectedUid).Count() > 0
                 select fitting;
 
-            //由于revitData出现了一条管道被7个附件连接的情况
-            //而且三通和它的管件会重复连接管道
-            //你是歌姬吧
-            //existFittings=existFittings. <XElement>(new FittingConnectEqualityComparer());
+            //线每个管件是我自己创的,都是需要的
+            if (nodeType == NodeType.LineDuct || nodeType == NodeType.LinePipe)
+                return existFittings;
 
+            //管每个管件是软件组自己创的
+            //使得revitData出现了一条管道被7个附件连接的情况
+            //而且三通和它的管件会重复连接管道
+            //歌姬吧
             ISet<XElement> list = new HashSet<XElement>(new FittingConnectEqualityComparer());
             List<XElement> listAppend = new List<XElement>();
-            foreach (XElement fitting in existFittings)
-                if (fitting.Attribute("ConnectorEntitys").Value.Split(";").Length > 2)
+            foreach (XElement fitting in existFittings) 
+                if (fitting.Attribute("ConnectorEntitys").Value.Trim(';').Split(";").Length > 2)
                     list.Add(fitting);
 
 
-            bool doDelete = false;
             foreach (XElement fitting in existFittings) 
             {
-                var minConnectedUid = fitting.Attribute("ConnectorEntitys").Value.Split(";");
-                if (minConnectedUid.Length <= 2)
+                bool doDelete = false;
+                var minConnectedUid = fitting.Attribute("ConnectorEntitys").Value.Trim(';').Split(";");
+                int minLength = minConnectedUid.Length;
+                if (minLength == 2)
                 {
                     foreach (XElement maxFitting in list)
                     {
-                        var maxConnectedUid = maxFitting.Attribute("ConnectorEntitys").Value.Split(";");
+                        var maxConnectedUid = maxFitting.Attribute("ConnectorEntitys").Value.Trim(';').Split(";");
 
-                        foreach (var minUid in minConnectedUid)
+                        if (maxConnectedUid.Intersect(minConnectedUid).Count() == minLength) 
                         {
-                            if (!maxConnectedUid.Contains(minUid))
-                            {
-                                break;
-                            }
                             doDelete = true;
-                        }
-                        if (doDelete)
                             break;
+                        }
                     }
                     if (!doDelete)
                         listAppend.Add(fitting);
@@ -581,17 +842,6 @@ namespace RevitDataXml2RevitOrderXml
             for (int i = 0; i < listAppend.Count(); i++)
                 list.Add(listAppend[i]);
 
-            //var set=existFittings
-            //    .GroupBy(elem => 
-            //    {
-
-            //    } )
-            //    .Select(group =>
-            //    {
-            //        group.OrderByDescending(elem => elem.Attribute("ConnectorEntitys").Value.Split(";").Length);
-            //        return group.First();
-            //    })
-            //    .ToList();
 
             return list;
         }
@@ -601,8 +851,8 @@ namespace RevitDataXml2RevitOrderXml
     {
         public bool Equals(XElement x, XElement y)
         {
-            var xConnectedUid = x.Attribute("ConnectorEntitys").Value.Split(";");
-            var yConnectedUid = y.Attribute("ConnectorEntitys").Value.Split(";");
+            var xConnectedUid = x.Attribute("ConnectorEntitys").Value.Trim(';').Split(";");
+            var yConnectedUid = y.Attribute("ConnectorEntitys").Value.Trim(';').Split(";");
 
             if (xConnectedUid.Length == yConnectedUid.Length)
             {
@@ -639,7 +889,7 @@ namespace RevitDataXml2RevitOrderXml
 
         public int GetHashCode([DisallowNull] XElement obj)
         {
-            var list = obj.Attribute("ConnectorEntitys").Value.Split(";").ToList();
+            var list = obj.Attribute("ConnectorEntitys").Value.Trim(';').Split(";").ToList();
             list.Sort();
             return BitConverter.ToInt32(new MD5CryptoServiceProvider().ComputeHash(ASCIIEncoding.ASCII.GetBytes(String.Join('_', list))));
         }
@@ -674,6 +924,9 @@ namespace RevitDataXml2RevitOrderXml
         public string color;
         public string horizonOffset;
         public string verticalOffset;
+
+        public ACSDR ac;
+        public DRSDR dr;
     }
 
     public class PipeNode
@@ -686,6 +939,9 @@ namespace RevitDataXml2RevitOrderXml
         public string endPoint;
         public string width;
         public string height;
+
+        public DRSDR dr = null;
+        public ACSDR ac = null;
 
         public NodeConnector[] connectors = new NodeConnector[4];
 
@@ -703,6 +959,36 @@ namespace RevitDataXml2RevitOrderXml
                 throw new Exception($"CreateNodeConnector:FirstNullIndex>=4,uid={this.uid}");
             return connectors[FirstNullIndex++] = new NodeConnector();
         }
+    }
+    public class ACSDR
+    {
+        public string SquareORRound = null;
+        public string ClosedDuct = null;
+        public string Size = null;
+        public string SDRSystemType = null;
+        public string PipeJoint = null;
+
+        public string InstallationSpace = null;
+        public string InsulationThickness = null;
+        public string PriorityANDSpecial = null;
+        public string GoThroughWallORBeam = null;
+    }
+
+    public class DRSDR
+    {
+        public string DiameterDN = null;
+        public string SDRSystemType = null;
+        public string PipeMaterial = null;
+        public string PipeJoint = null;
+        public string TrapORCleanout = null;
+
+        public string Bend45ORBend90 = null;
+        public string InstallationSpace = null;
+        public string InsulationThickness = null;
+        public string Slope = null;
+        public string Priority = null;
+
+        public string GoThroughWallORBeam = null;
     }
 
     public enum PipeNodeType
