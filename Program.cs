@@ -155,8 +155,8 @@ namespace RevitDataXml2RevitOrderXml
             var fittings = root_input.Element("Fittings").Elements();
 
             //③+④+⑤
-            //Process_AND_AppendXml_WithOneType(NodeType.Pipe, entitys, fittings);
-            //Process_AND_AppendXml_WithOneType(NodeType.Duct, entitys, fittings); 
+            Process_AND_AppendXml_WithOneType(NodeType.Pipe, entitys, fittings);
+            Process_AND_AppendXml_WithOneType(NodeType.Duct, entitys, fittings);
             Process_AND_AppendXml_WithOneType(NodeType.LinePipe, entitys, fittings);
             Process_AND_AppendXml_WithOneType(NodeType.LineDuct, entitys, fittings);
 
@@ -243,11 +243,11 @@ namespace RevitDataXml2RevitOrderXml
                         nullConnectorCount = 0;
                         foreach (NodeConnector connector in pipeNode.connectors)
                         {
-                            //找到一个起点: 存在3空
+                            //找到一个起点: 存在至少3空
                             if (connector == null || connector.node == null)
                                 nullConnectorCount++;
                         }
-                        if (nullConnectorCount != 3)
+                        if (nullConnectorCount < 3)
                             continue;
 
 
@@ -543,21 +543,18 @@ namespace RevitDataXml2RevitOrderXml
                         throw new Exception("找错了:1");
                     }
 
-                    NodeConnector firstGetConnector = null;
                     foreach (NodeConnector first_Connector in firstConnector.node.connectors)
                     {
                         if (first_Connector == null)
-                            break;
+                            continue;
                         if (Object.ReferenceEquals(pipeNode, first_Connector.node))
                         {
-                            firstGetConnector = first_Connector;
+                            //来了来了
+                            first_Connector.node = null;
+                            first_Connector.node_uid = String.Empty;
                             break;
                         }
                     }
-
-                    //来了来了
-                    firstGetConnector.node = null;
-                    firstGetConnector.node_uid = String.Empty;
                 }
                 if (unNullConnects == 2) //==2
                 {
@@ -570,37 +567,32 @@ namespace RevitDataXml2RevitOrderXml
                         throw new Exception("找错了:2");
                     }
 
-                    NodeConnector firstGetConnector = null;
-                    NodeConnector secondGetConnector = null;
-
                     foreach (NodeConnector first_Connector in firstConnector.node.connectors)
                     {
                         if (first_Connector == null)
-                            break;
+                            continue;
                         if (Object.ReferenceEquals(pipeNode, first_Connector.node))
                         {
-                            firstGetConnector = first_Connector;
+                            //来了来了
+                            first_Connector.node = secondConnector.node;
+                            first_Connector.node_uid = secondConnector.node_uid;
                             break;
                         }
                     }
                     foreach (NodeConnector second_Connector in secondConnector.node.connectors)
                     {
                         if (second_Connector == null)
-                            break;
+                            continue;
                         if (Object.ReferenceEquals(pipeNode, second_Connector.node))
                         {
-                            secondGetConnector = second_Connector;
+                            //来了来了
+                            second_Connector.node = firstConnector.node;
+                            second_Connector.node_uid = firstConnector.node_uid;
                             break;
                         }
                     }
                     //if (firstGetConnector == null || secondGetConnector == null)
                     //    throw new Exception("我能连到你,你却连不到我??");
-
-                    //来了来了
-                    firstGetConnector.node = secondConnector.node;
-                    firstGetConnector.node_uid = secondConnector.node_uid;
-                    secondGetConnector.node = firstConnector.node;
-                    secondGetConnector.node_uid = firstConnector.node_uid;
                 }
             }
         }
@@ -896,54 +888,6 @@ namespace RevitDataXml2RevitOrderXml
         }
     }
    
-    class FittingConnectEqualityComparer : IEqualityComparer<XElement>
-    {
-        public bool Equals(XElement x, XElement y)
-        {
-            var xConnectedUid = x.Attribute("ConnectorEntitys").Value.Split(";");
-            var yConnectedUid = y.Attribute("ConnectorEntitys").Value.Split(";");
-
-            if (xConnectedUid.Length == yConnectedUid.Length)
-            {
-                foreach(var xUid in xConnectedUid) 
-                {
-                    if(!yConnectedUid.Contains(xUid))
-                        return false;
-                }
-                return true;
-            }
-            else 
-            {
-                string[] maxConnectedUid;
-                string[] minConnectedUid;
-                if (xConnectedUid.Length > yConnectedUid.Length) 
-                {
-                    maxConnectedUid = xConnectedUid;
-                    minConnectedUid = yConnectedUid;
-                }
-                else 
-                {
-                    maxConnectedUid = yConnectedUid;
-                    minConnectedUid = xConnectedUid;
-                }
-
-                foreach (var minUid in minConnectedUid)
-                {
-                    if (!maxConnectedUid.Contains(minUid))
-                        return false;
-                }
-                return true;
-            }
-        }
-
-        public int GetHashCode([DisallowNull] XElement obj)
-        {
-            var list = obj.Attribute("ConnectorEntitys").Value.Split(";").ToList();
-            list.Sort();
-            return BitConverter.ToInt32(new MD5CryptoServiceProvider().ComputeHash(ASCIIEncoding.ASCII.GetBytes(String.Join('_', list))));
-        }
-    }
-
     public class NodeConnector
     {
         public string node_uid;
