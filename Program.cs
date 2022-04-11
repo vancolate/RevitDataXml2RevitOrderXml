@@ -264,9 +264,8 @@ namespace RevitDataXml2RevitOrderXml
                     foreach (PipeNode pipeNode in originalPipeNodes)
                     {
                         //必须由单头开始 ***待定:而且需要标记为S***
-                        //if (pipeNode.mark=="S")
-                        if (pipeNode.counted || pipeNode.pipeNodeType != PipeNodeType.Single)
-                            continue;
+                        if (pipeNode.ac?.Mark != "S" || pipeNode.counted)//|| pipeNode.pipeNodeType != PipeNodeType.Single
+                                continue;
 
                         PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
                         //顺序排入
@@ -281,8 +280,7 @@ namespace RevitDataXml2RevitOrderXml
                     foreach (PipeNode pipeNode in originalPipeNodes)
                     {
                         //必须由单头开始 ***待定:而且需要标记为S***
-                        //if (pipeNode.mark=="S")
-                        if (pipeNode.counted || pipeNode.pipeNodeType != PipeNodeType.Single)
+                        if (pipeNode.dr?.Mark != "S" || pipeNode.counted)//|| pipeNode.pipeNodeType != PipeNodeType.Single
                             continue;
 
                         PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
@@ -471,15 +469,14 @@ namespace RevitDataXml2RevitOrderXml
                                     continue;
                                 case NodeType.LinePipe:
                                 case NodeType.LineDuct:
-                                    //if(current.mark!="S") ***线管管件被标记为S,即开头时***
-                                    //  continue;
                                     //若是真SDR且为开头,覆盖列的SDR,结束
-                                    if (current.ac != null)
+                                    //***线管管件被标记为S,即开头时 * **
+                                    if (current.ac != null && current.ac.Mark == "S")
                                         pipeNodeList.ac = current.ac;
-                                    else if (current.dr != null)
+                                    else if (current.dr != null && current.dr.Mark == "S")
                                         pipeNodeList.dr = current.dr;
-                                    else
-                                        throw new Exception("线管单头管件但是它没有ac/dr");
+                                    //else
+                                        //throw new Exception("线管单头管件但是它没有ac/dr");
                                     break;
                             }
                             pipeNodeList.prev = prevList;
@@ -666,6 +663,8 @@ namespace RevitDataXml2RevitOrderXml
                     {
                         pipeNode.ac = new ACSDR()
                         {
+                            Mark = fitting.Attribute("Mark")?.Value,
+
                             SquareORRound = fitting.Attribute("SquareORRound")?.Value,
                             ClosedDuct = fitting.Attribute("ClosedDuct")?.Value,
                             Size = fitting.Attribute("Size")?.Value,
@@ -682,6 +681,8 @@ namespace RevitDataXml2RevitOrderXml
                     {
                         pipeNode.dr = new DRSDR()
                         {
+                            Mark = fitting.Attribute("Mark")?.Value,
+
                             DiameterDN = fitting.Attribute("DiameterDN")?.Value,
                             SDRSystemType = fitting.Attribute("SDRSystemType")?.Value,
                             PipeMaterial =fitting.Attribute("PipeMaterial")?.Value,
@@ -962,6 +963,8 @@ namespace RevitDataXml2RevitOrderXml
     }
     public class ACSDR
     {
+        public string Mark = null;
+
         public string SquareORRound = null;
         public string ClosedDuct = null;
         public string Size = null;
@@ -976,6 +979,8 @@ namespace RevitDataXml2RevitOrderXml
 
     public class DRSDR
     {
+        public string Mark = null;
+
         public string DiameterDN = null;
         public string SDRSystemType = null;
         public string PipeMaterial = null;
