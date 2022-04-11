@@ -895,6 +895,54 @@ namespace RevitDataXml2RevitOrderXml
             return BitConverter.ToInt32(new MD5CryptoServiceProvider().ComputeHash(ASCIIEncoding.ASCII.GetBytes(String.Join('_', list))));
         }
     }
+   
+    class FittingConnectEqualityComparer : IEqualityComparer<XElement>
+    {
+        public bool Equals(XElement x, XElement y)
+        {
+            var xConnectedUid = x.Attribute("ConnectorEntitys").Value.Split(";");
+            var yConnectedUid = y.Attribute("ConnectorEntitys").Value.Split(";");
+
+            if (xConnectedUid.Length == yConnectedUid.Length)
+            {
+                foreach(var xUid in xConnectedUid) 
+                {
+                    if(!yConnectedUid.Contains(xUid))
+                        return false;
+                }
+                return true;
+            }
+            else 
+            {
+                string[] maxConnectedUid;
+                string[] minConnectedUid;
+                if (xConnectedUid.Length > yConnectedUid.Length) 
+                {
+                    maxConnectedUid = xConnectedUid;
+                    minConnectedUid = yConnectedUid;
+                }
+                else 
+                {
+                    maxConnectedUid = yConnectedUid;
+                    minConnectedUid = xConnectedUid;
+                }
+
+                foreach (var minUid in minConnectedUid)
+                {
+                    if (!maxConnectedUid.Contains(minUid))
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        public int GetHashCode([DisallowNull] XElement obj)
+        {
+            var list = obj.Attribute("ConnectorEntitys").Value.Split(";").ToList();
+            list.Sort();
+            return BitConverter.ToInt32(new MD5CryptoServiceProvider().ComputeHash(ASCIIEncoding.ASCII.GetBytes(String.Join('_', list))));
+        }
+    }
 
     public class NodeConnector
     {
