@@ -83,32 +83,36 @@ namespace RevitDataXml2RevitOrderXml
                     //仅AC/仅DR
                     else if (pipeList.ac != null)
                     {
-                        pipeListXml.SetAttributeValue("SquareORRound", $"{pipeList.ac.SquareORRound}");
+                    Error: 添加到params参数;
+                        pipeListXml.SetAttributeValue("SquareRound", $"{pipeList.ac.SquareRound}");
                         pipeListXml.SetAttributeValue("ClosedDuct", $"{pipeList.ac.ClosedDuct}");
                         pipeListXml.SetAttributeValue("Size", $"{pipeList.ac.Size}");
-                        pipeListXml.SetAttributeValue("SDRSystemType", $"{pipeList.ac.SDRSystemType}");
+                        pipeListXml.SetAttributeValue("SystemType", $"{pipeList.ac.SystemType}");
                         pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.ac.PipeJoint}");
 
                         pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.ac.InstallationSpace}");
                         pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.ac.InsulationThickness}");
-                        pipeListXml.SetAttributeValue("PriorityANDSpecial", $"{pipeList.ac.PriorityANDSpecial}");
-                        pipeListXml.SetAttributeValue("GoThroughWallORBeam", $"{pipeList.ac.GoThroughWallORBeam}");
+                        pipeListXml.SetAttributeValue("PriorityandSpecial", $"{pipeList.ac.PriorityandSpecial}");
+                        pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.ac.GoThroughWall}");
+                        pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.ac.GoThroughBeam}");
                     }
                     else if (pipeList.dr != null)
                     {
-                        pipeListXml.SetAttributeValue("DiameterDN", $"{pipeList.dr.DiameterDN}");
-                        pipeListXml.SetAttributeValue("SDRSystemType", $"{pipeList.dr.SDRSystemType}");
+                    Error: 添加到params参数;
+                        pipeListXml.SetAttributeValue("Diameter", $"{pipeList.dr.Diameter}");
+                        pipeListXml.SetAttributeValue("SystemType", $"{pipeList.dr.SystemType}");
                         pipeListXml.SetAttributeValue("PipeMaterial", $"{pipeList.dr.PipeMaterial}");
                         pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.dr.PipeJoint}");
-                        pipeListXml.SetAttributeValue("TrapORCleanout", $"{pipeList.dr.TrapORCleanout}");
+                        pipeListXml.SetAttributeValue("TrapCleanout", $"{pipeList.dr.TrapCleanout}");
 
-                        pipeListXml.SetAttributeValue("Bend45ORBend90", $"{pipeList.dr.Bend45ORBend90}");
+                        pipeListXml.SetAttributeValue("Bend4590", $"{pipeList.dr.Bend4590}");
                         pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.dr.InstallationSpace}");
                         pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.dr.InsulationThickness}");
                         pipeListXml.SetAttributeValue("Slope", $"{pipeList.dr.Slope}");
                         pipeListXml.SetAttributeValue("Priority", $"{pipeList.dr.Priority}");
 
-                        pipeListXml.SetAttributeValue("GoThroughWallORBeam", $"{pipeList.dr.GoThroughWallORBeam}");
+                        pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.dr.GoThroughWall}");
+                        pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.dr.GoThroughBeam}");
                     }
 
                     pipeGroupXml.Add(pipeListXml);
@@ -154,12 +158,13 @@ namespace RevitDataXml2RevitOrderXml
 
             var entitys = root_input.Element("Entitys").Elements();
             var fittings = root_input.Element("Fittings").Elements();
+            var inputConnectors = root_input.Element("InputConnector").Elements();
 
             //③+④+⑤
             Process_AND_AppendXml_WithOneType(NodeType.Pipe, entitys, fittings);
             Process_AND_AppendXml_WithOneType(NodeType.Duct, entitys, fittings);
-            Process_AND_AppendXml_WithOneType(NodeType.LinePipe, entitys, fittings);
-            Process_AND_AppendXml_WithOneType(NodeType.LineDuct, entitys, fittings);
+            Process_AND_AppendXml_WithOneType(NodeType.LinePipe, entitys, inputConnectors);
+            Process_AND_AppendXml_WithOneType(NodeType.LineDuct, entitys, inputConnectors);
 
             //⑤输出xml
             XmlFactory.SaveXml(xmlWritePath);
@@ -171,8 +176,25 @@ namespace RevitDataXml2RevitOrderXml
         private static void Process_AND_AppendXml_WithOneType(NodeType nodeType,IEnumerable<XElement> entitys, IEnumerable<XElement> fittings)
         {
 
-            //(1)Duct✓ (2)Pipe (3)LineDuct (4)LinePipe
-            var entitys_type = GetTypeEntitysFromAllEntitys(nodeType.ToString(), entitys);
+            //(1)Duct (2)Pipe (3)LineDuct (4)LinePipe
+            string typeName;
+            switch (nodeType)
+            {
+
+                case NodeType.Pipe:
+                case NodeType.Duct:
+                    typeName = nodeType.ToString();
+                    break;
+                case NodeType.LinePipe:
+                    typeName = "DR Input Line";
+                    break;
+                case NodeType.LineDuct:
+                    typeName = "AC Input Line";
+                    break;
+                default:
+                    throw new Exception("非管类型");
+            }
+            var entitys_type = GetTypeEntitysFromAllEntitys(typeName, entitys);
             var fittings_type = GetTypeFittingsFromAllFittings(entitys_type, fittings,nodeType);
 
             //③转化为自定义管道类
@@ -212,12 +234,45 @@ namespace RevitDataXml2RevitOrderXml
                             pipeList.color = someonePipeXml.Element("Color").FirstAttribute.Value;
                             break;
                         case NodeType.LinePipe:
-                        Error: 上放至管道的DR属性;
-                            //pipeList.dr = 
+                            {
+                                XElement paramsXml = someonePipeXml.Element("Params");
+                                pipeList.dr = new DRLine()
+                                {
+                                    Diameter = paramsXml.Attribute("Diameter").Value,
+                                    SystemType = paramsXml.Attribute("SystemType").Value,
+                                    PipeMaterial = paramsXml.Attribute("PipeMaterial").Value,
+                                    PipeJoint = paramsXml.Attribute("PipeJoint").Value,
+                                    TrapCleanout = paramsXml.Attribute("TrapCleanout").Value,
+
+                                    Bend4590 = paramsXml.Attribute("Bend4590").Value,
+                                    InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
+                                    InsulationThickness = paramsXml.Attribute("InstulationThickness").Value,
+                                    Slope = paramsXml.Attribute("Slope").Value,
+                                    Priority = paramsXml.Attribute("Priority").Value,
+
+                                    GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
+                                    GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
+                                };
+                            }
                             break;
                         case NodeType.LineDuct:
-                        Error: 上放至管道的AC属性;
-                            //pipeList.ac=
+                            {
+                                XElement paramsXml = someonePipeXml.Element("Params");
+                                pipeList.ac = new ACLine()
+                                {
+                                    SquareRound = paramsXml.Attribute("SquareRound").Value,
+                                    ClosedDuct = paramsXml.Attribute("ClosedDuct").Value,
+                                    Size = paramsXml.Attribute("Size").Value,
+                                    SystemType = paramsXml.Attribute("SystemType").Value,
+                                    PipeJoint = paramsXml.Attribute("PipeJoint").Value,
+
+                                    InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
+                                    InsulationThickness = paramsXml.Attribute("InsulationThickness").Value,
+                                    PriorityandSpecial = paramsXml.Attribute("PriorityandSpecial").Value,
+                                    GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
+                                    GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
+                                };
+                            }
                             break;
                         default:
                             throw new Exception("只支持风/水管,线风/水管类型.");
@@ -663,7 +718,7 @@ namespace RevitDataXml2RevitOrderXml
                         break;
                     //线管不需要配置宽高,线管件下面的循环配置可能存在的SDR
                     case NodeType.LineDuct:
-                    Error: 线管利用ac设置尺寸;
+                    Error: 线管利用Params ac设置尺寸;
                         //if (entity.Element("DuctType").Attribute("value").Value == "圆形")
                         //    pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("DuctType").Attribute("Length1").Value) * 2).ToString();
                         //else
@@ -672,40 +727,13 @@ namespace RevitDataXml2RevitOrderXml
                         //    pipeNode.height = entity.Element("DuctType").Attribute("Length2").Value;
                         //}
 
-                        //pipeNode.ac = new ACLine()
-                        //{
-                        //    SquareORRound = fitting.Attribute("SquareORRound")?.Value,
-                        //    ClosedDuct = fitting.Attribute("ClosedDuct")?.Value,
-                        //    Size = fitting.Attribute("Size")?.Value,
-                        //    SDRSystemType = fitting.Attribute("SDRSystemType")?.Value,
-                        //    PipeJoint = fitting.Attribute("PipeJoint")?.Value,
 
-                        //    InstallationSpace =fitting.Attribute("InstallationSpace")?.Value,
-                        //    InsulationThickness =fitting.Attribute("InsulationThickness")?.Value,
-                        //    PriorityANDSpecial =fitting.Attribute("PriorityANDSpecial")?.Value,
-                        //    GoThroughWallORBeam =fitting.Attribute("GoThroughWallORBeam")?.Value,
-                        //};
                         break;
                     case NodeType.LinePipe:
-                    Error: 线管利用dr设置尺寸;
+                    Error: 线管利用Params dr设置尺寸;
                         //pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("Radius").FirstAttribute.Value) * 2).ToString();
 
-                        //pipeNode.dr = new DRLine()
-                        //{
-                        //    DiameterDN = fitting.Attribute("DiameterDN")?.Value,
-                        //    SDRSystemType = fitting.Attribute("SDRSystemType")?.Value,
-                        //    PipeMaterial =fitting.Attribute("PipeMaterial")?.Value,
-                        //    PipeJoint = fitting.Attribute("PipeJoint")?.Value,
-                        //    TrapORCleanout = fitting.Attribute("TrapORCleanout")?.Value,
 
-                        //    Bend45ORBend90 = fitting.Attribute("Bend45ORBend90")?.Value,
-                        //    InstallationSpace =fitting.Attribute("InstallationSpace")?.Value,
-                        //    InsulationThickness =fitting.Attribute("InsulationThickness")?.Value,
-                        //    Slope = fitting.Attribute("Slope")?.Value,
-                        //    Priority = fitting.Attribute("Priority")?.Value,
-
-                        //    GoThroughWallORBeam =fitting.Attribute("GoThroughWallORBeam")?.Value,
-                        //};
                         break;
                 }
 
@@ -725,7 +753,7 @@ namespace RevitDataXml2RevitOrderXml
                 //"Mark" 是AC和DR的MarkInput点共有的属性
                 if (nodeType==NodeType.LineDuct || nodeType == NodeType.LinePipe)
                 {
-                Error: 获取mark属性 ? "S";
+                Error: 获取mark属性 ? "S"; 可能没有?
                     pipeNode.mark = new MarkInput()
                     {
                         Mark= fitting.Attribute("Mark")?.Value,
@@ -824,8 +852,9 @@ namespace RevitDataXml2RevitOrderXml
         }
         private static IEnumerable<XElement> GetTypeFittingsFromAllFittings(IEnumerable<XElement> entitys_type, IEnumerable<XElement> fittings,NodeType nodeType)
         {
+            //拿到所有管道uid
             var uids = entitys_type.Select((elem) => elem.Attribute("UniqueId").Value);
-
+            //由管道uid选出所有这种类型的管件
             var existFittings = 
                 from fitting in fittings
                 let connectedUid = fitting.Attribute("ConnectorEntitys").Value.Trim(';').Split(";")
@@ -1001,33 +1030,35 @@ namespace RevitDataXml2RevitOrderXml
     }
     public class ACLine
     {
-        public string SquareORRound = null;
+        public string SquareRound = null;
         public string ClosedDuct = null;
         public string Size = null;
-        public string SDRSystemType = null;
+        public string SystemType = null;
         public string PipeJoint = null;
 
         public string InstallationSpace = null;
         public string InsulationThickness = null;
-        public string PriorityANDSpecial = null;
-        public string GoThroughWallORBeam = null;
+        public string PriorityandSpecial = null;
+        public string GoThroughWall = null;
+        public string GoThroughBeam = null;
     }
 
     public class DRLine
     {
-        public string DiameterDN = null;
-        public string SDRSystemType = null;
+        public string Diameter = null;
+        public string SystemType = null;
         public string PipeMaterial = null;
         public string PipeJoint = null;
-        public string TrapORCleanout = null;
+        public string TrapCleanout = null;
 
-        public string Bend45ORBend90 = null;
+        public string Bend4590 = null;
         public string InstallationSpace = null;
         public string InsulationThickness = null;
         public string Slope = null;
         public string Priority = null;
 
-        public string GoThroughWallORBeam = null;
+        public string GoThroughWall = null;
+        public string GoThroughBeam = null;
     }
     public class MarkInput 
     {
