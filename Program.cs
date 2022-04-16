@@ -40,7 +40,7 @@ namespace RevitDataXml2RevitOrderXml
                 pipeGroupXml = new XElement("PipeGroup");
                 int listCount = 1;
                 //遍历组内所有管件列
-                foreach (var pipeList in pipeGroup._pipeLists)
+                foreach (PipeNodeList pipeList in pipeGroup._pipeLists)
                 {
                     pipeListXml = new XElement("PipeList");
                     int nodeCount = 1;
@@ -63,11 +63,11 @@ namespace RevitDataXml2RevitOrderXml
                     pipeListXml.SetAttributeValue("PipeListNo", $"{listCount}");
                     pipeListXml.SetAttributeValue("PrevListNo", $"{pipeGroup._pipeLists.FindIndex((elem) => { return ReferenceEquals(elem, pipeList.prev); }) + 1}");
                     pipeListXml.SetAttributeValue("TeeId_Next", $"{pipeList.teeId_next}");
-                    pipeListXml.SetAttributeValue("TeePoint_Next", $"{pipeList.teePoint_next}");
+                    //pipeListXml.SetAttributeValue("TeePoint_Next", $"{pipeList.teePoint_next}");
 
                     //Pipe与Duct共用
-                    if (pipeList.familyName != null)
-                    {
+                    //if (pipeList.familyName != null)
+                    //{
                         pipeListXml.SetAttributeValue("FamilyName", $"{pipeList.familyName}");
                         pipeListXml.SetAttributeValue("SymbolName", $"{pipeList.symbolName}");
                         pipeListXml.SetAttributeValue("SystemClassfy", $"{pipeList.systemClassfy}");
@@ -75,45 +75,45 @@ namespace RevitDataXml2RevitOrderXml
                         pipeListXml.SetAttributeValue("HorizonOffset", $"{pipeList.horizonOffset}");
                         pipeListXml.SetAttributeValue("VerticalOffset", $"{pipeList.verticalOffset}");
                         pipeListXml.SetAttributeValue("Color", $"{pipeList.color}");
-                    }
+                    //}
 
                     //仅Duct
                     if (pipeList.ductType != null)
                         pipeListXml.SetAttributeValue("DuctType", $"{pipeList.ductType}");
-                    //仅AC/仅DR
-                    else if (pipeList.ac != null)
-                    {
-                    Error: 添加到params参数;
-                        pipeListXml.SetAttributeValue("SquareRound", $"{pipeList.ac.SquareRound}");
-                        pipeListXml.SetAttributeValue("ClosedDuct", $"{pipeList.ac.ClosedDuct}");
-                        pipeListXml.SetAttributeValue("Size", $"{pipeList.ac.Size}");
-                        pipeListXml.SetAttributeValue("SystemType", $"{pipeList.ac.SystemType}");
-                        pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.ac.PipeJoint}");
+                    ////仅AC/仅DR
+                    //else if (pipeList.ac != null)
+                    //{
+                    //Error: 添加到params参数;
+                    //    pipeListXml.SetAttributeValue("SquareRound", $"{pipeList.ac.SquareRound}");
+                    //    pipeListXml.SetAttributeValue("ClosedDuct", $"{pipeList.ac.ClosedDuct}");
+                    //    pipeListXml.SetAttributeValue("Size", $"{pipeList.ac.Size}");
+                    //    pipeListXml.SetAttributeValue("SystemType", $"{pipeList.ac.SystemType}");
+                    //    pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.ac.PipeJoint}");
 
-                        pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.ac.InstallationSpace}");
-                        pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.ac.InsulationThickness}");
-                        pipeListXml.SetAttributeValue("PriorityandSpecial", $"{pipeList.ac.PriorityandSpecial}");
-                        pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.ac.GoThroughWall}");
-                        pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.ac.GoThroughBeam}");
-                    }
-                    else if (pipeList.dr != null)
-                    {
-                    Error: 添加到params参数;
-                        pipeListXml.SetAttributeValue("Diameter", $"{pipeList.dr.Diameter}");
-                        pipeListXml.SetAttributeValue("SystemType", $"{pipeList.dr.SystemType}");
-                        pipeListXml.SetAttributeValue("PipeMaterial", $"{pipeList.dr.PipeMaterial}");
-                        pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.dr.PipeJoint}");
-                        pipeListXml.SetAttributeValue("TrapCleanout", $"{pipeList.dr.TrapCleanout}");
+                    //    pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.ac.InstallationSpace}");
+                    //    pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.ac.InsulationThickness}");
+                    //    pipeListXml.SetAttributeValue("PriorityandSpecial", $"{pipeList.ac.PriorityandSpecial}");
+                    //    pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.ac.GoThroughWall}");
+                    //    pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.ac.GoThroughBeam}");
+                    //}
+                    //else if (pipeList.dr != null)
+                    //{
+                    //Error: 添加到params参数;
+                    //    pipeListXml.SetAttributeValue("Diameter", $"{pipeList.dr.Diameter}");
+                    //    pipeListXml.SetAttributeValue("SystemType", $"{pipeList.dr.SystemType}");
+                    //    pipeListXml.SetAttributeValue("PipeMaterial", $"{pipeList.dr.PipeMaterial}");
+                    //    pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.dr.PipeJoint}");
+                    //    pipeListXml.SetAttributeValue("TrapCleanout", $"{pipeList.dr.TrapCleanout}");
 
-                        pipeListXml.SetAttributeValue("Bend4590", $"{pipeList.dr.Bend4590}");
-                        pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.dr.InstallationSpace}");
-                        pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.dr.InsulationThickness}");
-                        pipeListXml.SetAttributeValue("Slope", $"{pipeList.dr.Slope}");
-                        pipeListXml.SetAttributeValue("Priority", $"{pipeList.dr.Priority}");
+                    //    pipeListXml.SetAttributeValue("Bend4590", $"{pipeList.dr.Bend4590}");
+                    //    pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.dr.InstallationSpace}");
+                    //    pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.dr.InsulationThickness}");
+                    //    pipeListXml.SetAttributeValue("Slope", $"{pipeList.dr.Slope}");
+                    //    pipeListXml.SetAttributeValue("Priority", $"{pipeList.dr.Priority}");
 
-                        pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.dr.GoThroughWall}");
-                        pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.dr.GoThroughBeam}");
-                    }
+                    //    pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.dr.GoThroughWall}");
+                    //    pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.dr.GoThroughBeam}");
+                    //}
 
                     pipeGroupXml.Add(pipeListXml);
                     //下一个管件列
@@ -131,18 +131,30 @@ namespace RevitDataXml2RevitOrderXml
     }
     class Program
     {
+        public static int anonymousUid = 1;
+
         static void Main(string[] args)
         {
             //①找到xml
             string xmlReadPath = args[0];
-            string xmlWritePath = args[1];
+            string xmlWritePath = null;
             WriteLine($"xml读取路径为:{xmlReadPath}");
-            WriteLine($"xml输出路径为:{xmlWritePath}");
+            //WriteLine($"xml输出路径为:{xmlWritePath}");
 
-            if (args.Length < 2)
+            if (args.Length < 1)
             {
-                WriteLine("缺少参数:xml读取路径或xml输出路径");
+                WriteLine("缺少参数:xml读取路径");
                 return;
+            }
+            else if(args.Length > 1) 
+            {
+                xmlWritePath = args[1];
+                WriteLine($"xml输出路径为:{xmlWritePath}");
+            }
+            else 
+            {
+                xmlWritePath = Path.Combine(Directory.GetCurrentDirectory(), "RevitOrder.xml");
+                WriteLine($"xml默认输出路径为:{xmlWritePath}");
             }
 
             if (!File.Exists(xmlReadPath))
@@ -156,9 +168,9 @@ namespace RevitDataXml2RevitOrderXml
             XDocument xDocument = XDocument.Load(xmlReadPath);
             var root_input = xDocument.Root;
 
-            var entitys = root_input.Element("Entitys").Elements();
+            var entitys = root_input.Element("Entitys").Elements("Entity");
             var fittings = root_input.Element("Fittings").Elements();
-            var inputConnectors = root_input.Element("InputConnector").Elements();
+            var inputConnectors = root_input.Element("Entitys").Elements("InputConnector");
 
             //③+④+⑤
             Process_AND_AppendXml_WithOneType(NodeType.Pipe, entitys, fittings);
@@ -177,24 +189,7 @@ namespace RevitDataXml2RevitOrderXml
         {
 
             //(1)Duct (2)Pipe (3)LineDuct (4)LinePipe
-            string typeName;
-            switch (nodeType)
-            {
-
-                case NodeType.Pipe:
-                case NodeType.Duct:
-                    typeName = nodeType.ToString();
-                    break;
-                case NodeType.LinePipe:
-                    typeName = "DR Input Line";
-                    break;
-                case NodeType.LineDuct:
-                    typeName = "AC Input Line";
-                    break;
-                default:
-                    throw new Exception("非管类型");
-            }
-            var entitys_type = GetTypeEntitysFromAllEntitys(typeName, entitys);
+            var entitys_type = GetTypeEntitysFromAllEntitys(nodeType, entitys);
             var fittings_type = GetTypeFittingsFromAllFittings(entitys_type, fittings,nodeType);
 
             //③转化为自定义管道类
@@ -221,10 +216,10 @@ namespace RevitDataXml2RevitOrderXml
                     var someonePipeXml = entitys_type.First(elem => elem.Attribute("UniqueId").Value == pipeList._pipes[0].uid);
                     //在这里配置列拥有的属性
 
-                    switch (nodeType)
-                    {
-                        case NodeType.Pipe:
-                        case NodeType.Duct:
+                    //switch (nodeType)
+                    //{
+                    //    case NodeType.Pipe:
+                    //    case NodeType.Duct:
                             pipeList.familyName = someonePipeXml.Element("FamilyName").FirstAttribute.Value;
                             pipeList.symbolName = someonePipeXml.Element("SymbolName").FirstAttribute.Value;
                             pipeList.horizonOffset = someonePipeXml.Element("HorizonOffset").FirstAttribute.Value;
@@ -232,53 +227,53 @@ namespace RevitDataXml2RevitOrderXml
                             pipeList.systemClassfy = someonePipeXml.Element("SystemClassfy").FirstAttribute.Value;
                             pipeList.systemType = someonePipeXml.Element("SystemType").FirstAttribute.Value;
                             pipeList.color = someonePipeXml.Element("Color").FirstAttribute.Value;
-                            break;
-                        case NodeType.LinePipe:
-                            {
-                                XElement paramsXml = someonePipeXml.Element("Params");
-                                pipeList.dr = new DRLine()
-                                {
-                                    Diameter = paramsXml.Attribute("Diameter").Value,
-                                    SystemType = paramsXml.Attribute("SystemType").Value,
-                                    PipeMaterial = paramsXml.Attribute("PipeMaterial").Value,
-                                    PipeJoint = paramsXml.Attribute("PipeJoint").Value,
-                                    TrapCleanout = paramsXml.Attribute("TrapCleanout").Value,
+                    //        break;
+                    //    case NodeType.LinePipe:
+                    //        {
+                    //            XElement paramsXml = someonePipeXml.Element("Params");
+                    //            pipeList.dr = new DRLine()
+                    //            {
+                    //                Diameter = paramsXml.Attribute("Diameter").Value,
+                    //                SystemType = paramsXml.Attribute("SystemType").Value,
+                    //                PipeMaterial = paramsXml.Attribute("PipeMaterial").Value,
+                    //                PipeJoint = paramsXml.Attribute("PipeJoint").Value,
+                    //                TrapCleanout = paramsXml.Attribute("TrapCleanout").Value,
 
-                                    Bend4590 = paramsXml.Attribute("Bend4590").Value,
-                                    InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
-                                    InsulationThickness = paramsXml.Attribute("InstulationThickness").Value,
-                                    Slope = paramsXml.Attribute("Slope").Value,
-                                    Priority = paramsXml.Attribute("Priority").Value,
+                    //                Bend4590 = paramsXml.Attribute("Bend4590").Value,
+                    //                InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
+                    //                InsulationThickness = paramsXml.Attribute("InstulationThickness").Value,
+                    //                Slope = paramsXml.Attribute("Slope").Value,
+                    //                Priority = paramsXml.Attribute("Priority").Value,
 
-                                    GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
-                                    GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
-                                };
-                            }
-                            break;
-                        case NodeType.LineDuct:
-                            {
-                                XElement paramsXml = someonePipeXml.Element("Params");
-                                pipeList.ac = new ACLine()
-                                {
-                                    SquareRound = paramsXml.Attribute("SquareRound").Value,
-                                    ClosedDuct = paramsXml.Attribute("ClosedDuct").Value,
-                                    Size = paramsXml.Attribute("Size").Value,
-                                    SystemType = paramsXml.Attribute("SystemType").Value,
-                                    PipeJoint = paramsXml.Attribute("PipeJoint").Value,
+                    //                GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
+                    //                GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
+                    //            };
+                    //        }
+                    //        break;
+                    //    case NodeType.LineDuct:
+                    //        {
+                    //            XElement paramsXml = someonePipeXml.Element("Params");
+                    //            pipeList.ac = new ACLine()
+                    //            {
+                    //                SquareRound = paramsXml.Attribute("SquareRound").Value,
+                    //                ClosedDuct = paramsXml.Attribute("ClosedDuct").Value,
+                    //                Size = paramsXml.Attribute("Size").Value,
+                    //                SystemType = paramsXml.Attribute("SystemType").Value,
+                    //                PipeJoint = paramsXml.Attribute("PipeJoint").Value,
 
-                                    InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
-                                    InsulationThickness = paramsXml.Attribute("InsulationThickness").Value,
-                                    PriorityandSpecial = paramsXml.Attribute("PriorityandSpecial").Value,
-                                    GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
-                                    GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
-                                };
-                            }
-                            break;
-                        default:
-                            throw new Exception("只支持风/水管,线风/水管类型.");
-                    }
+                    //                InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
+                    //                InsulationThickness = paramsXml.Attribute("InsulationThickness").Value,
+                    //                PriorityandSpecial = paramsXml.Attribute("PriorityandSpecial").Value,
+                    //                GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
+                    //                GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
+                    //            };
+                    //        }
+                    //        break;
+                    //    default:
+                    //        throw new Exception("只支持风/水管,线风/水管类型.");
+                    //}
 
-                    if (pipeGroup.nodeType == NodeType.Duct)
+                    if (pipeGroup.nodeType == NodeType.Duct || pipeGroup.nodeType == NodeType.LineDuct)
                         pipeList.ductType = someonePipeXml.Element("DuctType").Attribute("value").Value;
                 }
             }
@@ -297,10 +292,12 @@ namespace RevitDataXml2RevitOrderXml
             PipeNodeBase pipeNodeBase = new PipeNodeBase();
             //遍历起点
 
-            switch (nodeType)
-            {
-                case NodeType.Pipe:
-                case NodeType.Duct:
+            //switch (nodeType)
+            //{
+            //    case NodeType.Duct:
+            //    case NodeType.Pipe:
+            //    case NodeType.LineDuct:
+            //    case NodeType.LinePipe:
                     int nullConnectorCount;
                     foreach (PipeNode pipeNode in originalPipeNodes)
                     {
@@ -328,40 +325,40 @@ namespace RevitDataXml2RevitOrderXml
                         if (pipeNodeGroup._pipeLists.Count > 0)
                             pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
                     }
-                    break;
-                case NodeType.LineDuct:
-                    foreach (PipeNode pipeNode in originalPipeNodes)
-                    {
-                        //必须由单头开始 ***待定:而且需要标记为S***
-                        if (pipeNode.mark==null || pipeNode.mark.Mark != "S" || pipeNode.counted)//|| pipeNode.pipeNodeType != PipeNodeType.Single
-                            continue;
+                    //break;
+                //case NodeType.LineDuct:
+                //    foreach (PipeNode pipeNode in originalPipeNodes)
+                //    {
+                //        //必须由单头开始 ***待定:而且需要标记为S***
+                //        if (pipeNode.mark==null || pipeNode.mark.Mark != "S" || pipeNode.counted)//|| pipeNode.pipeNodeType != PipeNodeType.Single
+                //            continue;
 
-                        PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
-                        //顺序排入
-                        Output2Group(pipeNode, pipeNodeGroup._pipeLists, nodeType);
+                //        PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
+                //        //顺序排入
+                //        Output2Group(pipeNode, pipeNodeGroup._pipeLists, nodeType);
 
-                        //加入节点库
-                        if (pipeNodeGroup._pipeLists.Count > 0)
-                            pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
-                    }
-                    break;
-                case NodeType.LinePipe:
-                    foreach (PipeNode pipeNode in originalPipeNodes)
-                    {
-                        //必须由单头开始 ***待定:而且需要标记为S***
-                        if (pipeNode.mark == null || pipeNode.mark.Mark != "S" || pipeNode.counted)//|| pipeNode.pipeNodeType != PipeNodeType.Single
-                            continue;
+                //        //加入节点库
+                //        if (pipeNodeGroup._pipeLists.Count > 0)
+                //            pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
+                //    }
+                //    break;
+                //case NodeType.LinePipe:
+                //    foreach (PipeNode pipeNode in originalPipeNodes)
+                //    {
+                //        //必须由单头开始 ***待定:而且需要标记为S***
+                //        if (pipeNode.mark == null || pipeNode.mark.Mark != "S" || pipeNode.counted)//|| pipeNode.pipeNodeType != PipeNodeType.Single
+                //            continue;
 
-                        PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
-                        //顺序排入
-                        Output2Group(pipeNode, pipeNodeGroup._pipeLists, nodeType);
+                //        PipeNodeGroup pipeNodeGroup = new PipeNodeGroup();
+                //        //顺序排入
+                //        Output2Group(pipeNode, pipeNodeGroup._pipeLists, nodeType);
 
-                        //加入节点库
-                        if (pipeNodeGroup._pipeLists.Count > 0)
-                            pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
-                    }
-                    break;
-            }
+                //        //加入节点库
+                //        if (pipeNodeGroup._pipeLists.Count > 0)
+                //            pipeNodeBase._pipeGroups.Add(pipeNodeGroup);
+                //    }
+                //    break;
+            //}
 
             return pipeNodeBase;
         }
@@ -402,19 +399,19 @@ namespace RevitDataXml2RevitOrderXml
             //    nextStack.Push((firstNode, null, null, null));
             //}
 
-            if (nodeType == NodeType.Pipe || nodeType == NodeType.Duct)
+            //if (nodeType == NodeType.Pipe || nodeType == NodeType.Duct)
                 nextStack.Push((firstNode, null, null));
-            if (nodeType == NodeType.LinePipe || nodeType == NodeType.LineDuct) 
-            {
-                //跳过开头的单头
-                foreach (NodeConnector connector in firstNode.connectors)
-                {
-                    if (connector == null || connector.node == null)
-                        continue;
-                    nextStack.Push((connector.node, firstNode, null));
-                    break;
-                }
-            }
+            //if (nodeType == NodeType.LinePipe || nodeType == NodeType.LineDuct) 
+            //{
+            //    //跳过开头的单头
+            //    foreach (NodeConnector connector in firstNode.connectors)
+            //    {
+            //        if (connector == null || connector.node == null)
+            //            continue;
+            //        nextStack.Push((connector.node, firstNode, null));
+            //        break;
+            //    }
+            //}
 
 
             do
@@ -482,7 +479,7 @@ namespace RevitDataXml2RevitOrderXml
                             //加入
                             pipeNodeList.prev = prevList;
                             pipeNodeList.teeId_next = current.uid;
-                            pipeNodeList.teePoint_next = current.startPoint;
+                            //pipeNodeList.teePoint_next = current.startPoint;
                             if (pipeNodeList._pipes.Count > 0)
                                 pipeNodeGroup.Add(pipeNodeList);
                             //分支循环
@@ -546,35 +543,35 @@ namespace RevitDataXml2RevitOrderXml
                     //        pipeNodeList = new PipeNodeList();
                     //    }
                     //    break;
-                    case PipeNodeType.Single:
-                        //判断是单头(结束时)(线管专用)
-                        {
-                            switch (nodeType)
-                            {
-                                case NodeType.Pipe:
-                                case NodeType.Duct:
-                                    //不用管
-                                    continue;
-                                case NodeType.LinePipe:
-                                case NodeType.LineDuct:
-                                    ////若是真SDR且为开头,覆盖列的SDR,结束
-                                    ////***线管管件被标记为S,即开头时 * **
-                                    //if (current.ac != null && current.ac.Mark == "S")
-                                    //    pipeNodeList.ac = current.ac;
-                                    //else if (current.dr != null && current.dr.Mark == "S")
-                                    //    pipeNodeList.dr = current.dr;
-                                    ////else
-                                    //    //throw new Exception("线管单头管件但是它没有ac/dr");
-                                    break;
-                            }
-                            pipeNodeList.prev = prevList;
-                            if (pipeNodeList._pipes.Count > 0)
-                                pipeNodeGroup.Add(pipeNodeList);
-                            pipeNodeList = new PipeNodeList();
-                        }
-                        break;
+                    //case PipeNodeType.Single:
+                    //    //判断是单头(结束时)(线管专用)
+                    //    {
+                    //        switch (nodeType)
+                    //        {
+                    //            case NodeType.Pipe:
+                    //            case NodeType.Duct:
+                    //                //不用管
+                    //                continue;
+                    //            case NodeType.LinePipe:
+                    //            case NodeType.LineDuct:
+                    //                ////若是真SDR且为开头,覆盖列的SDR,结束
+                    //                ////***线管管件被标记为S,即开头时 * **
+                    //                //if (current.ac != null && current.ac.Mark == "S")
+                    //                //    pipeNodeList.ac = current.ac;
+                    //                //else if (current.dr != null && current.dr.Mark == "S")
+                    //                //    pipeNodeList.dr = current.dr;
+                    //                ////else
+                    //                //    //throw new Exception("线管单头管件但是它没有ac/dr");
+                    //                break;
+                    //        }
+                    //        pipeNodeList.prev = prevList;
+                    //        if (pipeNodeList._pipes.Count > 0)
+                    //            pipeNodeGroup.Add(pipeNodeList);
+                    //        pipeNodeList = new PipeNodeList();
+                    //    }
+                    //    break;
                     default:
-                        throw new Exception("current.pipeNodeType == ?");
+                        throw new Exception($"current.pipeNodeType值异常,current.uid={current.uid}");
                 }
             } while (nextStack.Count > 0);
 
@@ -705,6 +702,7 @@ namespace RevitDataXml2RevitOrderXml
                 switch (nodeType)
                 {
                     case NodeType.Duct:
+                    case NodeType.LineDuct:
                         if (entity.Element("DuctType").Attribute("value").Value == "圆形")
                             pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("DuctType").Attribute("Length1").Value) * 2).ToString();
                         else
@@ -714,27 +712,10 @@ namespace RevitDataXml2RevitOrderXml
                         }
                         break;
                     case NodeType.Pipe:
+                    case NodeType.LinePipe:
                         pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("Radius").FirstAttribute.Value) * 2).ToString();
                         break;
-                    //线管不需要配置宽高,线管件下面的循环配置可能存在的SDR
-                    case NodeType.LineDuct:
-                    Error: 线管利用Params ac设置尺寸;
-                        //if (entity.Element("DuctType").Attribute("value").Value == "圆形")
-                        //    pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("DuctType").Attribute("Length1").Value) * 2).ToString();
-                        //else
-                        //{
-                        //    pipeNode.width = entity.Element("DuctType").Attribute("Length1").Value;
-                        //    pipeNode.height = entity.Element("DuctType").Attribute("Length2").Value;
-                        //}
-
-
-                        break;
-                    case NodeType.LinePipe:
-                    Error: 线管利用Params dr设置尺寸;
-                        //pipeNode.width = pipeNode.height = (Int32.Parse(entity.Element("Radius").FirstAttribute.Value) * 2).ToString();
-
-
-                        break;
+                    //线管变真管
                 }
 
                 //加入数组
@@ -744,20 +725,28 @@ namespace RevitDataXml2RevitOrderXml
             //连接件
             foreach (var fitting in fittings_type)
             {
-                PipeNode pipeNode = new PipeNode()
+                PipeNode pipeNode;
+                switch (nodeType)
                 {
-                    uid = fitting.Attribute("UniqueId").Value,
-                    startPoint= fitting.Attribute("Point").Value,
-                };
+                    case NodeType.Duct:
+                    case NodeType.Pipe:
+                            pipeNode = new PipeNode()
+                            {
+                                uid = fitting.Attribute("UniqueId").Value,
+                                //startPoint = fitting.Attribute("Point").Value,
+                            };
+                        break;
 
-                //"Mark" 是AC和DR的MarkInput点共有的属性
-                if (nodeType==NodeType.LineDuct || nodeType == NodeType.LinePipe)
-                {
-                Error: 获取mark属性 ? "S"; 可能没有?
-                    pipeNode.mark = new MarkInput()
-                    {
-                        Mark= fitting.Attribute("Mark")?.Value,
-                    };
+                    case NodeType.LineDuct:
+                    case NodeType.LinePipe:
+                        pipeNode = new PipeNode()
+                        {
+                            uid = (anonymousUid++).ToString(),
+                        };
+                        break;
+                    //线管变真管
+                    default:
+                        throw new Exception("非管类型");
                 }
 
                 //连接件类型
@@ -843,12 +832,41 @@ namespace RevitDataXml2RevitOrderXml
                 //变得超简单
                 pipeNode.CreateNodeConnector().node_uid = connectedUid;
         }
-        private static IEnumerable<XElement> GetTypeEntitysFromAllEntitys(String typeName, IEnumerable<XElement> entitys)
+        private static IEnumerable<XElement> GetTypeEntitysFromAllEntitys(NodeType nodeType, IEnumerable<XElement> entitys)
         {
-            return
-                from entity in entitys
-                where entity.Attribute("type").Value == typeName
-                select entity;
+            switch (nodeType)
+            {
+                case NodeType.Duct:
+                    return
+                        from entity in entitys
+                        where entity.Attribute("type").Value == "Duct"
+                        where entity.Element("FamilyName").FirstAttribute.Value != "AC Input"
+                        select entity;
+
+                case NodeType.LineDuct:
+                    return
+                        from entity in entitys
+                        where entity.Attribute("type").Value == "Duct"
+                        where entity.Element("FamilyName").FirstAttribute.Value == "AC Input"
+                        select entity;
+
+                case NodeType.Pipe:
+                    return
+                        from entity in entitys
+                        where entity.Attribute("type").Value == "Pipe"
+                        where entity.Element("FamilyName").FirstAttribute.Value != "DR Input"
+                        select entity;
+
+                case NodeType.LinePipe:
+                    return
+                        from entity in entitys
+                        where entity.Attribute("type").Value == "Pipe"
+                        where entity.Element("FamilyName").FirstAttribute.Value == "DR Input"
+                        select entity;
+
+                default:
+                    throw new Exception("非管类型");
+            }
         }
         private static IEnumerable<XElement> GetTypeFittingsFromAllFittings(IEnumerable<XElement> entitys_type, IEnumerable<XElement> fittings,NodeType nodeType)
         {
@@ -983,7 +1001,7 @@ namespace RevitDataXml2RevitOrderXml
         public List<PipeNode> _pipes = new List<PipeNode>();
         public PipeNodeList prev;
         public string teeId_next;
-        public string teePoint_next;
+        //public string teePoint_next;
 
         public string familyName;
         public string symbolName;
@@ -994,22 +1012,22 @@ namespace RevitDataXml2RevitOrderXml
         public string horizonOffset;
         public string verticalOffset;
 
-        public ACLine ac;
-        public DRLine dr;
+        //public ACLine ac;
+        //public DRLine dr;
     }
 
     public class PipeNode
     {
         public bool counted = false;
-        public PipeNodeType pipeNodeType;
 
+        public PipeNodeType pipeNodeType;
         public string uid;
         public string startPoint;
         public string endPoint;
         public string width;
         public string height;
 
-        public MarkInput mark = null;
+        //public MarkInput mark = null;
 
         public NodeConnector[] connectors = new NodeConnector[4];
 
@@ -1028,42 +1046,42 @@ namespace RevitDataXml2RevitOrderXml
             return connectors[FirstNullIndex++] = new NodeConnector();
         }
     }
-    public class ACLine
-    {
-        public string SquareRound = null;
-        public string ClosedDuct = null;
-        public string Size = null;
-        public string SystemType = null;
-        public string PipeJoint = null;
+    //public class ACLine
+    //{
+    //    public string SquareRound = null;
+    //    public string ClosedDuct = null;
+    //    public string Size = null;
+    //    public string SystemType = null;
+    //    public string PipeJoint = null;
 
-        public string InstallationSpace = null;
-        public string InsulationThickness = null;
-        public string PriorityandSpecial = null;
-        public string GoThroughWall = null;
-        public string GoThroughBeam = null;
-    }
+    //    public string InstallationSpace = null;
+    //    public string InsulationThickness = null;
+    //    public string PriorityandSpecial = null;
+    //    public string GoThroughWall = null;
+    //    public string GoThroughBeam = null;
+    //}
 
-    public class DRLine
-    {
-        public string Diameter = null;
-        public string SystemType = null;
-        public string PipeMaterial = null;
-        public string PipeJoint = null;
-        public string TrapCleanout = null;
+    //public class DRLine
+    //{
+    //    public string Diameter = null;
+    //    public string SystemType = null;
+    //    public string PipeMaterial = null;
+    //    public string PipeJoint = null;
+    //    public string TrapCleanout = null;
 
-        public string Bend4590 = null;
-        public string InstallationSpace = null;
-        public string InsulationThickness = null;
-        public string Slope = null;
-        public string Priority = null;
+    //    public string Bend4590 = null;
+    //    public string InstallationSpace = null;
+    //    public string InsulationThickness = null;
+    //    public string Slope = null;
+    //    public string Priority = null;
 
-        public string GoThroughWall = null;
-        public string GoThroughBeam = null;
-    }
-    public class MarkInput 
-    {
-        public string Mark = null;
-    }
+    //    public string GoThroughWall = null;
+    //    public string GoThroughBeam = null;
+    //}
+    //public class MarkInput 
+    //{
+    //    public string Mark = null;
+    //}
 
     public enum PipeNodeType
     {
