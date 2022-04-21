@@ -13,23 +13,26 @@ using System.Text;
 
 namespace RevitDataXml2RevitOrderXml
 {
-    static class XmlFactory
+    class XmlFactory
     {
         private static int groupCount = 1;
 
-        private static XDocument Xdocument_Output = new XDocument();
-        private static XElement root_Output = new XElement("Root");
-        static XmlFactory()
+        private XDocument Xdocument_Output;//= new XDocument();
+        private XElement pipeBase_Output;// = new XElement("Root");
+        public XmlFactory(XDocument readXDocument)
         {
-            Xdocument_Output.Add(root_Output);
+            Xdocument_Output = readXDocument;
+            //Xdocument_Output.Add(root_Output);
+            pipeBase_Output = new XElement("PipeBase");
+            Xdocument_Output.Root.Add(pipeBase_Output);
         }
 
-        public static void SaveXml(string savePath)
+        public void SaveXml(string savePath)
         {
             Xdocument_Output.Save(savePath);
         }
 
-        public static void AppendXml(PipeNodeBase pipeNodeBase)
+        public void AppendXml(PipeNodeBase pipeNodeBase)
         {
             XElement pipeGroupXml;
             XElement pipeListXml;
@@ -63,59 +66,20 @@ namespace RevitDataXml2RevitOrderXml
                     pipeListXml.SetAttributeValue("PipeListNo", $"{listCount}");
                     pipeListXml.SetAttributeValue("PrevListNo", $"{pipeGroup._pipeLists.FindIndex((elem) => { return ReferenceEquals(elem, pipeList.prev); }) + 1}");
                     pipeListXml.SetAttributeValue("TeeId_Next", $"{pipeList.teeId_next}");
-                    //pipeListXml.SetAttributeValue("TeePoint_Next", $"{pipeList.teePoint_next}");
 
-                    //Pipe与Duct共用
-                    //if (pipeList.familyName != null)
-                    //{
-                        pipeListXml.SetAttributeValue("FamilyName", $"{pipeList.familyName}");
-                        pipeListXml.SetAttributeValue("SymbolName", $"{pipeList.symbolName}");
-                        pipeListXml.SetAttributeValue("SystemClassfy", $"{pipeList.systemClassfy}");
-                        pipeListXml.SetAttributeValue("SystemType", $"{pipeList.systemType}");
-                        pipeListXml.SetAttributeValue("HorizonOffset", $"{pipeList.horizonOffset}");
-                        pipeListXml.SetAttributeValue("VerticalOffset", $"{pipeList.verticalOffset}");
-                        pipeListXml.SetAttributeValue("Color", $"{pipeList.color}");
-                    //}
+                    pipeListXml.SetAttributeValue("FamilyName", $"{pipeList.familyName}");
+                    pipeListXml.SetAttributeValue("SymbolName", $"{pipeList.symbolName}");
+                    pipeListXml.SetAttributeValue("SystemClassfy", $"{pipeList.systemClassfy}");
+                    pipeListXml.SetAttributeValue("SystemType", $"{pipeList.systemType}");
+                    pipeListXml.SetAttributeValue("HorizonOffset", $"{pipeList.horizonOffset}");
+                    pipeListXml.SetAttributeValue("VerticalOffset", $"{pipeList.verticalOffset}");
+                    pipeListXml.SetAttributeValue("Color", $"{pipeList.color}");
 
                     //仅Duct
                     if (pipeList.ductType != null)
                         pipeListXml.SetAttributeValue("DuctType", $"{pipeList.ductType}");
                     if (pipeGroup.nodeType == NodeType.LineDuct || pipeGroup.nodeType == NodeType.LinePipe)
                         pipeListXml.SetAttributeValue("Mark", $"{pipeList.mark?.Mark}");
-                    ////仅AC/仅DR
-                    //else if (pipeList.ac != null)
-                    //{
-                    //Error: 添加到params参数;
-                    //    pipeListXml.SetAttributeValue("SquareRound", $"{pipeList.ac.SquareRound}");
-                    //    pipeListXml.SetAttributeValue("ClosedDuct", $"{pipeList.ac.ClosedDuct}");
-                    //    pipeListXml.SetAttributeValue("Size", $"{pipeList.ac.Size}");
-                    //    pipeListXml.SetAttributeValue("SystemType", $"{pipeList.ac.SystemType}");
-                    //    pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.ac.PipeJoint}");
-
-                    //    pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.ac.InstallationSpace}");
-                    //    pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.ac.InsulationThickness}");
-                    //    pipeListXml.SetAttributeValue("PriorityandSpecial", $"{pipeList.ac.PriorityandSpecial}");
-                    //    pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.ac.GoThroughWall}");
-                    //    pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.ac.GoThroughBeam}");
-                    //}
-                    //else if (pipeList.dr != null)
-                    //{
-                    //Error: 添加到params参数;
-                    //    pipeListXml.SetAttributeValue("Diameter", $"{pipeList.dr.Diameter}");
-                    //    pipeListXml.SetAttributeValue("SystemType", $"{pipeList.dr.SystemType}");
-                    //    pipeListXml.SetAttributeValue("PipeMaterial", $"{pipeList.dr.PipeMaterial}");
-                    //    pipeListXml.SetAttributeValue("PipeJoint", $"{pipeList.dr.PipeJoint}");
-                    //    pipeListXml.SetAttributeValue("TrapCleanout", $"{pipeList.dr.TrapCleanout}");
-
-                    //    pipeListXml.SetAttributeValue("Bend4590", $"{pipeList.dr.Bend4590}");
-                    //    pipeListXml.SetAttributeValue("InstallationSpace", $"{pipeList.dr.InstallationSpace}");
-                    //    pipeListXml.SetAttributeValue("InsulationThickness", $"{pipeList.dr.InsulationThickness}");
-                    //    pipeListXml.SetAttributeValue("Slope", $"{pipeList.dr.Slope}");
-                    //    pipeListXml.SetAttributeValue("Priority", $"{pipeList.dr.Priority}");
-
-                    //    pipeListXml.SetAttributeValue("GoThroughWall", $"{pipeList.dr.GoThroughWall}");
-                    //    pipeListXml.SetAttributeValue("GoThroughBeam", $"{pipeList.dr.GoThroughBeam}");
-                    //}
 
                     pipeGroupXml.Add(pipeListXml);
                     //下一个管件列
@@ -124,7 +88,7 @@ namespace RevitDataXml2RevitOrderXml
                 pipeGroupXml.SetAttributeValue("PipeGroupNo", $"{groupCount}");
                 pipeGroupXml.SetAttributeValue("Type", $"{pipeGroup.nodeType}");
 
-                root_Output.Add(pipeGroupXml);
+                pipeBase_Output.Add(pipeGroupXml);
                 //下一个管件组
                 groupCount++;
             }
@@ -133,7 +97,8 @@ namespace RevitDataXml2RevitOrderXml
     }
     class Program
     {
-        public static int anonymousUid = 1;
+        private static XmlFactory xmlFactory;
+        private static int anonymousUid = 1;
 
         static void Main(string[] args)
         {
@@ -168,6 +133,8 @@ namespace RevitDataXml2RevitOrderXml
             //②读取xml
             WriteLine("载入xml中...");
             XDocument xDocument = XDocument.Load(xmlReadPath);
+            xmlFactory = new XmlFactory(xDocument);
+
             var root_input = xDocument.Root;
 
             var entitys = root_input.Element("Entitys").Elements("Entity");
@@ -181,7 +148,7 @@ namespace RevitDataXml2RevitOrderXml
             Process_AND_AppendXml_WithOneType(NodeType.LinePipe, entitys, inputConnectors);
 
             //⑤输出xml
-            XmlFactory.SaveXml(xmlWritePath);
+            xmlFactory.SaveXml(xmlWritePath);
 
             WriteLine("程序结束");
             return;
@@ -218,62 +185,13 @@ namespace RevitDataXml2RevitOrderXml
                     var someonePipeXml = entitys_type.First(elem => elem.Attribute("UniqueId").Value == pipeList._pipes[0].uid);
                     //在这里配置列拥有的属性
 
-                    //switch (nodeType)
-                    //{
-                    //    case NodeType.Pipe:
-                    //    case NodeType.Duct:
-                            pipeList.familyName = someonePipeXml.Element("FamilyName").FirstAttribute.Value;
-                            pipeList.symbolName = someonePipeXml.Element("SymbolName").FirstAttribute.Value;
-                            pipeList.horizonOffset = someonePipeXml.Element("HorizonOffset").FirstAttribute.Value;
-                            pipeList.verticalOffset = someonePipeXml.Element("VerticalOffset").FirstAttribute.Value;
-                            pipeList.systemClassfy = someonePipeXml.Element("SystemClassfy").FirstAttribute.Value;
-                            pipeList.systemType = someonePipeXml.Element("SystemType").FirstAttribute.Value;
-                            pipeList.color = someonePipeXml.Element("Color").FirstAttribute.Value;
-                    //        break;
-                    //    case NodeType.LinePipe:
-                    //        {
-                    //            XElement paramsXml = someonePipeXml.Element("Params");
-                    //            pipeList.dr = new DRLine()
-                    //            {
-                    //                Diameter = paramsXml.Attribute("Diameter").Value,
-                    //                SystemType = paramsXml.Attribute("SystemType").Value,
-                    //                PipeMaterial = paramsXml.Attribute("PipeMaterial").Value,
-                    //                PipeJoint = paramsXml.Attribute("PipeJoint").Value,
-                    //                TrapCleanout = paramsXml.Attribute("TrapCleanout").Value,
-
-                    //                Bend4590 = paramsXml.Attribute("Bend4590").Value,
-                    //                InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
-                    //                InsulationThickness = paramsXml.Attribute("InstulationThickness").Value,
-                    //                Slope = paramsXml.Attribute("Slope").Value,
-                    //                Priority = paramsXml.Attribute("Priority").Value,
-
-                    //                GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
-                    //                GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
-                    //            };
-                    //        }
-                    //        break;
-                    //    case NodeType.LineDuct:
-                    //        {
-                    //            XElement paramsXml = someonePipeXml.Element("Params");
-                    //            pipeList.ac = new ACLine()
-                    //            {
-                    //                SquareRound = paramsXml.Attribute("SquareRound").Value,
-                    //                ClosedDuct = paramsXml.Attribute("ClosedDuct").Value,
-                    //                Size = paramsXml.Attribute("Size").Value,
-                    //                SystemType = paramsXml.Attribute("SystemType").Value,
-                    //                PipeJoint = paramsXml.Attribute("PipeJoint").Value,
-
-                    //                InstallationSpace = paramsXml.Attribute("InstallationSpace").Value,
-                    //                InsulationThickness = paramsXml.Attribute("InsulationThickness").Value,
-                    //                PriorityandSpecial = paramsXml.Attribute("PriorityandSpecial").Value,
-                    //                GoThroughWall = paramsXml.Attribute("GoThroughWall").Value,
-                    //                GoThroughBeam = paramsXml.Attribute("GoThroughBeam").Value,
-                    //            };
-                    //        }
-                    //        break;
-                    //    default:
-                    //        throw new Exception("只支持风/水管,线风/水管类型.");
-                    //}
+                    pipeList.familyName = someonePipeXml.Element("FamilyName").FirstAttribute.Value;
+                    pipeList.symbolName = someonePipeXml.Element("SymbolName").FirstAttribute.Value;
+                    pipeList.horizonOffset = someonePipeXml.Element("HorizonOffset").FirstAttribute.Value;
+                    pipeList.verticalOffset = someonePipeXml.Element("VerticalOffset").FirstAttribute.Value;
+                    pipeList.systemClassfy = someonePipeXml.Element("SystemClassfy").FirstAttribute.Value;
+                    pipeList.systemType = someonePipeXml.Element("SystemType").FirstAttribute.Value;
+                    pipeList.color = someonePipeXml.Element("Color").FirstAttribute.Value;
 
                     if (pipeGroup.nodeType == NodeType.Duct || pipeGroup.nodeType == NodeType.LineDuct)
                         pipeList.ductType = someonePipeXml.Element("DuctType").Attribute("value").Value;
@@ -281,7 +199,7 @@ namespace RevitDataXml2RevitOrderXml
             }
 
             //⑤输出RevitOrder.xml
-            XmlFactory.AppendXml(pipeNodeBase);
+            xmlFactory.AppendXml(pipeNodeBase);
         }
 
 
