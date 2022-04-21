@@ -839,28 +839,28 @@ namespace RevitDataXml2RevitOrderXml
                     return
                         from entity in entitys
                         where entity.Attribute("type").Value == "Duct"
-                        where entity.Element("SymbolName").FirstAttribute.Value != "AC Input"
+                        where entity.Element("FamilyName").FirstAttribute.Value != "AC Line"
                         select entity;
 
                 case NodeType.LineDuct:
                     return
                         from entity in entitys
                         where entity.Attribute("type").Value == "Duct"
-                        where entity.Element("SymbolName").FirstAttribute.Value == "AC Input"
+                        where entity.Element("FamilyName").FirstAttribute.Value == "AC Line"
                         select entity;
 
                 case NodeType.Pipe:
                     return
                         from entity in entitys
                         where entity.Attribute("type").Value == "Pipe"
-                        where entity.Element("SymbolName").FirstAttribute.Value != "DR Input"
+                        where entity.Element("FamilyName").FirstAttribute.Value != "DR Line"
                         select entity;
 
                 case NodeType.LinePipe:
                     return
                         from entity in entitys
                         where entity.Attribute("type").Value == "Pipe"
-                        where entity.Element("SymbolName").FirstAttribute.Value == "DR Input"
+                        where entity.Element("FamilyName").FirstAttribute.Value == "DR Line"
                         select entity;
 
                 default:
